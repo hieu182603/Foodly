@@ -1,10 +1,32 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Home from './pages/Home';
+import Layout from './components/Layout';
+
+// Protected Route
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    const user = localStorage.getItem('user');
+    return user ? <>{children}</> : <Navigate to="/login" />;
+};
 
 const App = () => {
     return (
-        <div className="flex flex-col min-h-screen items-center justify-center">
-            <h1 className="text-3xl font-bold text-primary">Welcome to Foodly</h1>
-        </div>
+        <BrowserRouter>
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                    path="/"
+                    element={
+                        <ProtectedRoute>
+                            <Layout>
+                                <Home />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+            </Routes>
+        </BrowserRouter>
     );
 };
 
