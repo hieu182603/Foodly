@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './page/LoginPage';
+import RegisterPage from './page/RegisterPage';
+import MenuPage from './page/MenuPage';
+import Footer from './component/Footer';
+import { Dish } from './types';
 
 const App = () => {
+    const [cart, setCart] = useState<Dish[]>([]);
+
+    const addToCart = (dish: Dish) => {
+        setCart(prev => [...prev, dish]);
+    };
+
     return (
-        <div className="flex flex-col min-h-screen items-center justify-center">
-            <h1 className="text-3xl font-bold text-primary">Welcome to Foodly</h1>
-        </div>      
+        <Router>
+            <Routes>
+                <Route path="/" element={<LoginPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/menu" element={
+                    <>
+                        <MenuPage addToCart={addToCart} />
+                        <Footer />
+                    </>
+                } />
+            </Routes>
+        </Router>
     );
 };
 
