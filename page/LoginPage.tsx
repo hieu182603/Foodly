@@ -1,9 +1,33 @@
-import React from 'react';
-import { UtensilsCrossed } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { UtensilsCrossed } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { User } from "../types";
 
-const LoginPage = () => {
+interface LoginPageProps {
+   onLogin: (email: string, password: string) => User | null;
+   currentUser: User | null;
+}
+
+const LoginPage = ({ onLogin, currentUser }: LoginPageProps) => {
    const navigate = useNavigate();
+   const [email, setEmail] = useState("");
+   const [password, setPassword] = useState("");
+   const [error, setError] = useState<string | null>(null);
+
+   const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
+      const user = onLogin(email, password);
+      if (!user) {
+         setError("Sai email hoặc mật khẩu.");
+         return;
+      }
+      if (user.role === "admin") {
+         navigate("/admin");
+      } else {
+         navigate("/");
+      }
+   };
 
    return (
       <div className="min-h-screen flex w-full">
@@ -19,26 +43,62 @@ const LoginPage = () => {
          {/* Right Side Form */}
          <div className="flex flex-1 flex-col items-center justify-center p-8 bg-background">
             <div className="w-full max-w-md">
-               <div className="flex items-center gap-2 mb-8 justify-center lg:justify-start cursor-pointer" onClick={() => navigate('/')}>
+               <button
+                  type="button"
+                  className="flex items-center gap-2 mb-8 justify-center lg:justify-start cursor-pointer"
+                  onClick={() => navigate('/')}
+               >
                   <div className="bg-primary p-2 rounded-lg text-white"><UtensilsCrossed size={24} /></div>
                   <span className="text-2xl font-bold text-textMain">Foodie Delight</span>
-               </div>
+               </button>
 
                <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
                   <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-                  <form className="space-y-4">
+                  <form className="space-y-4" onSubmit={handleSubmit}>
                      <div className="space-y-2">
-                        <label className="text-sm font-bold">Email</label>
-                        <input type="email" placeholder="name@example.com" className="w-full rounded-xl border-gray-200 bg-background h-12 px-4 focus:ring-primary focus:border-primary" />
+                        <label className="text-sm font-bold" htmlFor="email">Email</label>
+                        <input
+                           type="email"
+                           id="email"
+                           value={email}
+                           onChange={(e) => setEmail(e.target.value)}
+                           placeholder="name@example.com"
+                           className="w-full rounded-xl border-gray-200 bg-background h-12 px-4 focus:ring-primary focus:border-primary"
+                           required
+                        />
                      </div>
                      <div className="space-y-2">
-                        <label className="text-sm font-bold">Password</label>
-                        <input type="password" placeholder="••••••••" className="w-full rounded-xl border-gray-200 bg-background h-12 px-4 focus:ring-primary focus:border-primary" />
+                        <label className="text-sm font-bold" htmlFor="password">Password</label>
+                        <input
+                           type="password"
+                           id="password"
+                           value={password}
+                           onChange={(e) => setPassword(e.target.value)}
+                           placeholder="••••••••"
+                           className="w-full rounded-xl border-gray-200 bg-background h-12 px-4 focus:ring-primary focus:border-primary"
+                           required
+                        />
                      </div>
+                     {error && (
+                        <p className="text-sm text-red-500 font-semibold">
+                           {error}
+                        </p>
+                     )}
                      <div className="flex justify-end">
-                        <a href="#" className="text-primary text-sm font-bold hover:underline">Forgot password?</a>
+                        <button
+                           type="button"
+                           className="text-primary text-sm font-bold hover:underline"
+                           onClick={() => navigate('/forgot-password')}
+                        >
+                           Forgot password?
+                        </button>
                      </div>
-                     <button type="button" onClick={() => navigate('/menu')} className="w-full bg-primary text-white font-bold h-12 rounded-xl hover:bg-primaryDark transition-all">Sign In</button>
+                     <button
+                        type="submit"
+                        className="w-full bg-primary text-white font-bold h-12 rounded-xl hover:bg-primaryDark transition-all"
+                     >
+                        Sign In
+                     </button>
                   </form>
 
                   <div className="mt-6 text-center">
@@ -48,17 +108,6 @@ const LoginPage = () => {
                            Create one
                         </button>
                      </p>
-                  </div>
-
-                  <div className="relative my-8">
-                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
-                     <div className="relative flex justify-center text-sm"><span className="bg-white px-4 text-gray-500">Or continue with</span></div>
-                  </div>
-
-                  <div>
-                     <button className="flex items-center justify-center gap-2 w-full h-12 border border-gray-200 rounded-xl hover:bg-gray-50 font-semibold transition-colors">
-                        <span className="text-red-500 font-bold">G</span> Google
-                     </button>
                   </div>
                </div>
             </div>
