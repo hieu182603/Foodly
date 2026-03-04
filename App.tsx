@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import LoginPage from "./page/LoginPage";
 import RegisterPage from "./page/RegisterPage";
+import ForgotPasswordPage from "./page/ForgotPasswordPage";
 import MenuPage from "./page/MenuPage";
 import HomePage from "./page/HomePage";
+import CartPage from "./page/CartPage";
+import AdminPage from "./page/AdminPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import { Dish } from "./types";
-
-interface CartItem extends Dish {
-  quantity: number;
-}
+import { USERS } from "./mockData";
+import { Dish, CartItem, User } from "./types";
 
 const load = <T,>(key: string, fallback: T): T => {
   try {
@@ -20,10 +25,28 @@ const load = <T,>(key: string, fallback: T): T => {
   }
 };
 
+const Layout = ({
+  cartCount,
+  children,
+}: {
+  cartCount: number;
+  children: React.ReactNode;
+}) => (
+  <>
+    <Navbar cartCount={cartCount} />
+    <main>{children}</main>
+    <Footer />
+  </>
+);
+
 const App = () => {
   const [cart, setCart] = useState<CartItem[]>(() => load("foodly_cart", []));
   const [wishlist, setWishlist] = useState<number[]>(() =>
     load("foodly_wishlist", []),
+  );
+  const [users, setUsers] = useState<User[]>(() => load("foodly_users", USERS));
+  const [currentUser, setCurrentUser] = useState<User | null>(() =>
+    load("foodly_current_user", null),
   );
 
   useEffect(() => {
@@ -32,14 +55,20 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem("foodly_wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
+  useEffect(() => {
+    localStorage.setItem("foodly_users", JSON.stringify(users));
+  }, [users]);
+  useEffect(() => {
+    localStorage.setItem("foodly_current_user", JSON.stringify(currentUser));
+  }, [currentUser]);
 
   const addToCart = (dish: Dish) =>
     setCart((prev) => {
       const found = prev.find((i) => i.id === dish.id);
       return found
         ? prev.map((i) =>
-            i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
-          )
+          i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
+        )
         : [...prev, { ...dish, quantity: 1 }];
     });
 
@@ -48,39 +77,113 @@ const App = () => {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
+  const updateQuantity = (id: number, delta: number) =>
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, quantity: item.quantity + delta }
+          : item,
+      ),
+    );
+
+  const removeFromCart = (id: number) =>
+    setCart((prev) => prev.filter((item) => item.id !== id));
+
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
-  const Layout = ({ children }: { children: React.ReactNode }) => (
-    <>
-      <Navbar cartCount={cartCount} />
-      <main>{children}</main>
-      <Footer />
-    </>
-  );
+  const login = (email: string, password: string): User | null => {
+    const found = users.find(
+      (u) =>
+        u.email.toLowerCase() === email.toLowerCase() && u.password === password,
+    );
+    if (!found) return null;
+    setCurrentUser(found);
+    return found;
+  };
+
+  const register = (data: {
+    name: string;
+    email: string;
+    password: string;
+    role: User["role"];
+  }): { user?: User; error?: string } => {
+    const exists = users.some(
+      (u) => u.email.toLowerCase() === data.email.toLowerCase(),
+    );
+    if (exists) {
+      return { error: "Email đã tồn tại, vui lòng dùng email khác." };
+    }
+    const newUser: User = {
+      id: users.length ? Math.max(...users.map((u) => u.id)) + 1 : 1,
+      ...data,
+    };
+    const next = [...users, newUser];
+    setUsers(next);
+    setCurrentUser(newUser);
+    return { user: newUser };
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+  };
 
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/login"
+          element={<LoginPage onLogin={login} currentUser={currentUser} />}
+        />
+        <Route
+          path="/register"
+          element={<RegisterPage onRegister={register} />}
+        />
+        <Route
+          path="/forgot-password"
+          element={<ForgotPasswordPage />}
+        />
         <Route
           path="/"
           element={
-            <Layout>
+            <Layout cartCount={cartCount} children={
               <HomePage
                 addToCart={addToCart}
                 wishlist={wishlist}
                 toggleWishlist={toggleWishlist}
               />
-            </Layout>
+            } />
           }
         />
         <Route
           path="/menu"
           element={
-            <Layout>
+            <Layout cartCount={cartCount} children={
               <MenuPage addToCart={addToCart} />
-            </Layout>
+            } />
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <Layout cartCount={cartCount} children={
+              <CartPage
+                cart={cart}
+                updateQuantity={updateQuantity}
+                removeFromCart={removeFromCart}
+              />
+            } />
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            currentUser?.role === "admin" ? (
+              <Layout cartCount={cartCount} children={
+                <AdminPage user={currentUser} onLogout={logout} />
+              } />
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         />
       </Routes>

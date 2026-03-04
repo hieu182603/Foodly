@@ -1,72 +1,12 @@
-import { Dish } from './types';
+import database from "./database.json";
+import { Dish, Order, User } from "./types";
 
-export const DISHES: Dish[] = [
-    {
-        id: 1,
-        name: 'Margherita Pizza',
-        description: 'Classic pizza with fresh mozzarella, tomatoes, and basil on a crispy thin crust.',
-        price: 225000,
-        image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=600&q=80',
-        category: 'Pizza',
-        isBestSeller: true,
-    },
-    {
-        id: 2,
-        name: 'Pepperoni Pizza',
-        description: 'Loaded with spicy pepperoni slices, melted cheese, and our signature tomato sauce.',
-        price: 250000,
-        image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=600&q=80',
-        category: 'Pizza',
-    },
-    {
-        id: 3,
-        name: 'Classic Cheeseburger',
-        description: 'Juicy beef patty with cheddar cheese, lettuce, tomato, and special sauce.',
-        price: 175000,
-        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80',
-        category: 'Burger',
-        isBestSeller: true,
-    },
-    {
-        id: 4,
-        name: 'BBQ Bacon Burger',
-        description: 'Smoky BBQ sauce, crispy bacon, onion rings, and melted Swiss cheese.',
-        price: 200000,
-        image: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=600&q=80',
-        category: 'Burger',
-    },
-    {
-        id: 5,
-        name: 'Grilled Salmon',
-        description: 'Fresh Atlantic salmon fillet grilled to perfection with lemon herb butter.',
-        price: 350000,
-        image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80',
-        category: 'Main',
-        isBestSeller: true,
-    },
-    {
-        id: 6,
-        name: 'Caesar Salad',
-        description: 'Crisp romaine lettuce, parmesan cheese, croutons, and creamy Caesar dressing.',
-        price: 125000,
-        image: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=600&q=80',
-        category: 'Salad',
-    },
-    {
-        id: 7,
-        name: 'Mango Smoothie',
-        description: 'Refreshing blend of ripe mangoes, yogurt, and a touch of honey.',
-        price: 75000,
-        image: 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=600&q=80',
-        category: 'Drink',
-    },
-    {
-        id: 8,
-        name: 'Tiramisu',
-        description: 'Classic Italian dessert with layers of espresso-soaked ladyfingers and mascarpone cream.',
-        price: 110000,
-        image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=600&q=80',
-        category: 'Dessert',
-        isBestSeller: true,
-    },
-];
+const db = database as {
+  dishes: Dish[];
+  orders: Order[];
+  users: User[];
+};
+
+export const DISHES: Dish[] = db.dishes;
+export const ORDERS: Order[] = db.orders;
+export const USERS: User[] = db.users;

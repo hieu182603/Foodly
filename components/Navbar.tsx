@@ -14,7 +14,6 @@ const Navbar = ({ cartCount = 0 }: NavbarProps) => {
   const links = [
     { label: "Home", path: "/" },
     { label: "Menu", path: "/menu" },
-    { label: "Cart", path: "/cart" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -35,31 +34,15 @@ const Navbar = ({ cartCount = 0 }: NavbarProps) => {
           </span>
         </div>
 
-        {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-1">
-          {links.map((link) => (
-            <button
-              key={link.path}
-              onClick={() => navigate(link.path)}
-              className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                isActive(link.path)
-                  ? "bg-primary/10 text-primary"
-                  : "text-textSec hover:text-textMain hover:bg-gray-50"
-              }`}
-            >
-              {link.label}
-            </button>
-          ))}
-        </div>
-
         {/* Right Side */}
         <div className="flex items-center gap-3">
-          {/* Cart Button */}
+          {/* Cart Button (icon + text) */}
           <button
             onClick={() => navigate("/cart")}
-            className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="relative flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all bg-primary/10 text-primary hover:bg-primary/20"
           >
-            <ShoppingCart size={22} className="text-textMain" />
+            <ShoppingCart size={20} />
+            <span>Cart</span>
             {cartCount > 0 && (
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                 {cartCount > 9 ? "9+" : cartCount}
