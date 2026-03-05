@@ -67,8 +67,8 @@ const App = () => {
       const found = prev.find((i) => i.id === dish.id);
       return found
         ? prev.map((i) =>
-          i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
-        )
+            i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
+          )
         : [...prev, { ...dish, quantity: 1 }];
     });
 
@@ -80,9 +80,7 @@ const App = () => {
   const updateQuantity = (id: number, delta: number) =>
     setCart((prev) =>
       prev.map((item) =>
-        item.id === id
-          ? { ...item, quantity: item.quantity + delta }
-          : item,
+        item.id === id ? { ...item, quantity: item.quantity + delta } : item,
       ),
     );
 
@@ -94,7 +92,8 @@ const App = () => {
   const login = (email: string, password: string): User | null => {
     const found = users.find(
       (u) =>
-        u.email.toLowerCase() === email.toLowerCase() && u.password === password,
+        u.email.toLowerCase() === email.toLowerCase() &&
+        u.password === password,
     );
     if (!found) return null;
     setCurrentUser(found);
@@ -138,49 +137,51 @@ const App = () => {
           path="/register"
           element={<RegisterPage onRegister={register} />}
         />
-        <Route
-          path="/forgot-password"
-          element={<ForgotPasswordPage />}
-        />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route
           path="/"
           element={
-            <Layout cartCount={cartCount} children={
-              <HomePage
-                addToCart={addToCart}
-                wishlist={wishlist}
-                toggleWishlist={toggleWishlist}
-              />
-            } />
+            <Layout
+              cartCount={cartCount}
+              children={
+                <HomePage
+                  addToCart={addToCart}
+                  wishlist={wishlist}
+                  toggleWishlist={toggleWishlist}
+                />
+              }
+            />
           }
         />
         <Route
           path="/menu"
           element={
-            <Layout cartCount={cartCount} children={
-              <MenuPage addToCart={addToCart} />
-            } />
+            <Layout
+              cartCount={cartCount}
+              children={<MenuPage addToCart={addToCart} />}
+            />
           }
         />
         <Route
           path="/cart"
           element={
-            <Layout cartCount={cartCount} children={
-              <CartPage
-                cart={cart}
-                updateQuantity={updateQuantity}
-                removeFromCart={removeFromCart}
-              />
-            } />
+            <Layout
+              cartCount={cartCount}
+              children={
+                <CartPage
+                  cart={cart}
+                  updateQuantity={updateQuantity}
+                  removeFromCart={removeFromCart}
+                />
+              }
+            />
           }
         />
         <Route
           path="/admin"
           element={
             currentUser?.role === "admin" ? (
-              <Layout cartCount={cartCount} children={
-                <AdminPage user={currentUser} onLogout={logout} />
-              } />
+              <AdminPage user={currentUser} onLogout={logout} />
             ) : (
               <Navigate to="/login" replace />
             )
