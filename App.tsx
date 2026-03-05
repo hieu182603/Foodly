@@ -12,6 +12,8 @@ import MenuPage from "./page/MenuPage";
 import HomePage from "./page/HomePage";
 import CartPage from "./page/CartPage";
 import AdminPage from "./page/AdminPage";
+import ProfilePage from "./page/ProfilePage";
+import OrderHistoryPage from "./page/OrderHistoryPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { USERS } from "./mockData";
@@ -27,13 +29,17 @@ const load = <T,>(key: string, fallback: T): T => {
 
 const Layout = ({
   cartCount,
+  currentUser,
+  onLogout,
   children,
 }: {
   cartCount: number;
+  currentUser: User | null;
+  onLogout: () => void;
   children: React.ReactNode;
 }) => (
   <>
-    <Navbar cartCount={cartCount} />
+    <Navbar cartCount={cartCount} currentUser={currentUser} onLogout={onLogout} />
     <main>{children}</main>
     <Footer />
   </>
@@ -67,8 +73,8 @@ const App = () => {
       const found = prev.find((i) => i.id === dish.id);
       return found
         ? prev.map((i) =>
-            i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
-          )
+          i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
+        )
         : [...prev, { ...dish, quantity: 1 }];
     });
 
@@ -143,6 +149,8 @@ const App = () => {
           element={
             <Layout
               cartCount={cartCount}
+              currentUser={currentUser}
+              onLogout={logout}
               children={
                 <HomePage
                   addToCart={addToCart}
@@ -158,6 +166,8 @@ const App = () => {
           element={
             <Layout
               cartCount={cartCount}
+              currentUser={currentUser}
+              onLogout={logout}
               children={<MenuPage addToCart={addToCart} />}
             />
           }
@@ -167,6 +177,8 @@ const App = () => {
           element={
             <Layout
               cartCount={cartCount}
+              currentUser={currentUser}
+              onLogout={logout}
               children={
                 <CartPage
                   cart={cart}
@@ -174,6 +186,28 @@ const App = () => {
                   removeFromCart={removeFromCart}
                 />
               }
+            />
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <Layout
+              cartCount={cartCount}
+              currentUser={currentUser}
+              onLogout={logout}
+              children={<ProfilePage currentUser={currentUser} />}
+            />
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <Layout
+              cartCount={cartCount}
+              currentUser={currentUser}
+              onLogout={logout}
+              children={<OrderHistoryPage currentUser={currentUser} />}
             />
           }
         />
