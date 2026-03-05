@@ -14,6 +14,7 @@ import CartPage from "./page/CartPage";
 import AdminPage from "./page/AdminPage";
 import ProfilePage from "./page/ProfilePage";
 import OrderHistoryPage from "./page/OrderHistoryPage";
+import BookingPage from "./page/BookingPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { USERS } from "./mockData";
@@ -39,7 +40,11 @@ const Layout = ({
   children: React.ReactNode;
 }) => (
   <>
-    <Navbar cartCount={cartCount} currentUser={currentUser} onLogout={onLogout} />
+    <Navbar
+      cartCount={cartCount}
+      currentUser={currentUser}
+      onLogout={onLogout}
+    />
     <main>{children}</main>
     <Footer />
   </>
@@ -73,8 +78,8 @@ const App = () => {
       const found = prev.find((i) => i.id === dish.id);
       return found
         ? prev.map((i) =>
-          i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
-        )
+            i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
+          )
         : [...prev, { ...dish, quantity: 1 }];
     });
 
@@ -208,6 +213,17 @@ const App = () => {
               currentUser={currentUser}
               onLogout={logout}
               children={<OrderHistoryPage currentUser={currentUser} />}
+            />
+          }
+        />
+        <Route
+          path="/booking"
+          element={
+            <Layout
+              cartCount={cartCount}
+              currentUser={currentUser}
+              onLogout={logout}
+              children={<BookingPage />}
             />
           }
         />
