@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ClipboardList, DollarSign, Users, TrendingUp } from "lucide-react";
-import { ORDERS, DISHES } from "../../mockData";
-import { USERS } from "../../mockData";
-import { OrderStatus } from "../../types";
+import { dbService } from "../../databaseService";
+import { OrderStatus, Order, Dish, User } from "../../types";
 
 const fmt = (p: number) => `${p.toLocaleString("vi-VN")}đ`;
 
@@ -21,10 +20,32 @@ const StatusBadge = ({ status }: { status: OrderStatus }) => {
 };
 
 const AdminDashboard = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [dishes, setDishes] = useState<Dish[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [loadedOrders, loadedDishes, loadedUsers] = await Promise.all([
+          dbService.getOrders(),
+          dbService.getDishes(),
+          dbService.getUsers(),
+        ]);
+        setOrders(loadedOrders);
+        setDishes(loadedDishes);
+        setUsers(loadedUsers);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      }
+    };
+    loadData();
+  }, []);
+
   const stats = [
     {
       label: "Tổng đơn hàng",
-      val: ORDERS.length,
+      val: orders.length,
       icon: ClipboardList,
       color: "text-primary",
       bg: "bg-primary/10",
@@ -32,7 +53,7 @@ const AdminDashboard = () => {
     },
     {
       label: "Doanh thu",
-      val: fmt(ORDERS.reduce((s, o) => s + o.total, 0)),
+      val: fmt(orders.reduce((s, o) => s + o.total, 0)),
       icon: DollarSign,
       color: "text-green-600",
       bg: "bg-green-100",
@@ -40,7 +61,7 @@ const AdminDashboard = () => {
     },
     {
       label: "Số món ăn",
-      val: DISHES.length,
+      val: dishes.length,
       icon: TrendingUp,
       color: "text-orange-600",
       bg: "bg-orange-100",
@@ -48,7 +69,7 @@ const AdminDashboard = () => {
     },
     {
       label: "Khách hàng",
-      val: USERS.filter((u) => u.role === "customer").length,
+      val: users.filter((u) => u.role === "customer").length,
       icon: Users,
       color: "text-blue-600",
       bg: "bg-blue-100",
@@ -117,7 +138,7 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {ORDERS.map((order) => (
+              {orders.slice(0, 10).map((order) => (
                 <tr
                   key={order.id}
                   className="hover:bg-gray-50/60 transition-colors"
