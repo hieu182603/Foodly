@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -11,7 +11,7 @@ import {
   Clock,
   LayoutDashboard,
 } from "lucide-react";
-import { DISHES } from "../mockData";
+import { dbService } from "../databaseService";
 import { Dish } from "../types";
 
 interface HomePageProps {
@@ -24,7 +24,7 @@ const CATEGORIES = ["Pizza", "Burger", "Main", "Salad", "Drink", "Dessert"];
 const PRICE_RANGES = [
   { label: "All Prices", value: "all" },
   { label: "Under 100k", value: "under100" },
-  { label: "100k - 200k", value: "100to200" },
+  { label: "100k – 200k", value: "100to200" },
   { label: "Over 200k", value: "over200" },
 ];
 
@@ -34,15 +34,28 @@ const HomePage = ({
   toggleWishlist,
 }: HomePageProps) => {
   const navigate = useNavigate();
+  const [dishes, setDishes] = useState<Dish[]>([]);
   const [search, setSearch] = useState("");
   const [onlyBestSeller, setOnlyBestSeller] = useState(false);
   const [priceRange, setPriceRange] = useState("all");
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<
-    "popular" | "price_asc" | "price_desc" | "name_asc" | "name_desc"
-  >("popular");
+  const [sortBy, setSortBy] = useState<"popular" | "price_asc" | "price_desc">(
+    "popular",
+  );
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [addedId, setAddedId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadDishes = async () => {
+      try {
+        const loadedDishes = await dbService.getDishes();
+        setDishes(loadedDishes);
+      } catch (error) {
+        console.error("Failed to load dishes:", error);
+      }
+    };
+    loadDishes();
+  }, []);
 
   const toggleCat = (cat: string) =>
     setSelectedCats((prev) =>
@@ -51,7 +64,7 @@ const HomePage = ({
 
   const filtered = useMemo(
     () =>
-      DISHES.filter((dish) => {
+      dishes.filter((dish) => {
         if (onlyBestSeller && !dish.isBestSeller) return false;
         if (priceRange === "under100" && dish.price >= 100000) return false;
         if (
@@ -65,14 +78,14 @@ const HomePage = ({
         if (search && !dish.name.toLowerCase().includes(search.toLowerCase()))
           return false;
         return true;
-      }).sort((a, b) => {
-        if (sortBy === "price_asc") return a.price - b.price;
-        if (sortBy === "price_desc") return b.price - a.price;
-        if (sortBy === "name_asc") return a.name.localeCompare(b.name);
-        if (sortBy === "name_desc") return b.name.localeCompare(a.name);
-        return 0;
-      }),
-    [onlyBestSeller, priceRange, selectedCats, search, sortBy],
+      }).sort((a, b) =>
+        sortBy === "price_asc"
+          ? a.price - b.price
+          : sortBy === "price_desc"
+            ? b.price - a.price
+            : 0,
+      ),
+    [dishes, onlyBestSeller, priceRange, selectedCats, search, sortBy],
   );
 
   const handleAdd = (dish: Dish) => {
@@ -258,11 +271,7 @@ const HomePage = ({
                       ? "Popular"
                       : sortBy === "price_asc"
                         ? "Low → High"
-                        : sortBy === "price_desc"
-                          ? "High → Low"
-                          : sortBy === "name_asc"
-                            ? "Name: A-Z"
-                            : "Name: Z-A"}
+                        : "High → Low"}
                   </span>
                   <ChevronDown
                     size={14}
@@ -275,8 +284,6 @@ const HomePage = ({
                       { id: "popular", label: "Popular" },
                       { id: "price_asc", label: "Price: Low to High" },
                       { id: "price_desc", label: "Price: High to Low" },
-                      { id: "name_asc", label: "Name: A-Z" },
-                      { id: "name_desc", label: "Name: Z-A" },
                     ].map((opt) => (
                       <button
                         key={opt.id}
@@ -438,26 +445,44 @@ const HomePage = ({
         </div>
       </section>
 
-      {/* ── BOOKING SECTION ── */}
-      <section className="py-12 bg-background">
+      {/* ── WHY US ── */}
+      <section className="py-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-primary to-orange-600 rounded-2xl p-8 text-center shadow-xl">
-            <div className="max-w-2xl mx-auto">
-              <div className="text-4xl mb-3">🍽️</div>
-              <h2 className="text-2xl lg:text-3xl font-extrabold text-white mb-2">
-                Reserve Your Table
-              </h2>
-              <p className="text-white/90 text-sm mb-6">
-                Book a table in advance and enjoy a wonderful dining experience
-              </p>
-              <button
-                onClick={() => navigate("/booking")}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary font-bold rounded-xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-textMain mb-3">
+              Why Choose Foodly?
+            </h2>
+            <div className="w-16 h-1.5 bg-primary mx-auto rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: "🚀",
+                title: "Fast Delivery",
+                desc: "Orders delivered within 20 minutes anywhere in the city.",
+              },
+              {
+                icon: "🥗",
+                title: "Fresh Ingredients",
+                desc: "Sourced from trusted suppliers, guaranteed safe and hygienic.",
+              },
+              {
+                icon: "💬",
+                title: "24/7 Support",
+                desc: "Our customer care team is always ready to help you.",
+              },
+            ].map((f) => (
+              <div
+                key={f.title}
+                className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100 hover:shadow-md transition-all"
               >
-                <UtensilsCrossed size={18} />
-                Book a Table Now
-              </button>
-            </div>
+                <div className="text-5xl mb-5">{f.icon}</div>
+                <h3 className="text-lg font-bold text-textMain mb-3">
+                  {f.title}
+                </h3>
+                <p className="text-textSec text-sm leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
