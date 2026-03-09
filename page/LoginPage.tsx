@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { User } from "../types";
 
 interface LoginPageProps {
-   onLogin: (email: string, password: string) => User | null;
+   onLogin: (email: string, password: string) => Promise<User | null>;
    currentUser: User | null;
 }
 
@@ -14,10 +14,10 @@ const LoginPage = ({ onLogin, currentUser }: LoginPageProps) => {
    const [password, setPassword] = useState("");
    const [error, setError] = useState<string | null>(null);
 
-   const handleSubmit = (e: React.FormEvent) => {
+   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setError(null);
-      const user = onLogin(email, password);
+      const user = await onLogin(email, password);
       if (!user) {
          setError("Sai email hoặc mật khẩu.");
          return;

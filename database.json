@@ -97,6 +97,13 @@
       "table": "T5",
       "total": 560000,
       "status": "Cancelled"
+    },
+    {
+      "id": "#ORD-1773059185470",
+      "customer": "Customer Demo",
+      "table": "Take away",
+      "total": 475000,
+      "status": "Pending"
     }
   ],
   "users": [
@@ -115,77 +122,10 @@
       "role": "admin"
     }
   ],
-  "tables": [
-    {
-      "id": 1,
-      "name": "T1",
-      "capacity": 2,
-      "location": "Near Window",
-      "status": "available"
-    },
-    {
-      "id": 2,
-      "name": "T2",
-      "capacity": 4,
-      "location": "Center Area",
-      "status": "available"
-    },
-    {
-      "id": 3,
-      "name": "T3",
-      "capacity": 2,
-      "location": "Corner",
-      "status": "occupied"
-    },
-    {
-      "id": 4,
-      "name": "T4",
-      "capacity": 6,
-      "location": "Center Area",
-      "status": "available"
-    },
-    {
-      "id": 5,
-      "name": "T5",
-      "capacity": 4,
-      "location": "Near Entrance",
-      "status": "available"
-    },
-    {
-      "id": 6,
-      "name": "T6",
-      "capacity": 2,
-      "location": "Near Window",
-      "status": "reserved"
-    },
-    {
-      "id": 7,
-      "name": "T7",
-      "capacity": 8,
-      "location": "VIP Room",
-      "status": "available"
-    },
-    {
-      "id": 8,
-      "name": "T8",
-      "capacity": 4,
-      "location": "Center Area",
-      "status": "available"
-    },
-    {
-      "id": 9,
-      "name": "T9",
-      "capacity": 2,
-      "location": "Near Bar",
-      "status": "available"
-    },
-    {
-      "id": 10,
-      "name": "T10",
-      "capacity": 6,
-      "location": "Near Kitchen",
-      "status": "available"
-    }
-  ],
-  "bookings": []
+  "carts": {
+    "1": []
+  },
+  "wishlists": {
+    "1": []
+  }
 }
