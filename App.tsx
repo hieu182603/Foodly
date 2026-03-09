@@ -15,6 +15,7 @@ import CheckoutPage from "./page/CheckoutPage";
 import AdminPage from "./page/AdminPage";
 import ProfilePage from "./page/ProfilePage";
 import OrderHistoryPage from "./page/OrderHistoryPage";
+import OrderDetailPage from "./page/OrderDetailPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { dbService } from "./databaseService";
@@ -54,6 +55,35 @@ const Layout = ({
   </>
 );
 
+const ProtectedRoute = ({
+  currentUser,
+  allowedRoles,
+  children,
+}: {
+  currentUser: User | null;
+  allowedRoles?: User["role"][];
+  children: React.ReactNode;
+}) => {
+  // 1. No user logged in, but roles are required
+  if (!currentUser && allowedRoles) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // 2. User logged in, check role permissions
+  if (currentUser && allowedRoles && !allowedRoles.includes(currentUser.role)) {
+    const target = currentUser.role === "admin" ? "/admin" : "/";
+    return <Navigate to={target} replace />;
+  }
+
+  // 3. Special case: Admin trying to access customer-only or generic public food pages
+  // We want to force admins to stay in the admin dashboard area
+  if (currentUser?.role === "admin" && !allowedRoles?.includes("admin")) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(() =>
     loadCurrentUser(),
@@ -71,7 +101,7 @@ const App = () => {
         setIsLoading(true);
         const loadedUsers = await dbService.getUsers();
         setUsers(loadedUsers);
-        
+
         if (currentUser) {
           const [loadedCart, loadedWishlist] = await Promise.all([
             dbService.getCart(currentUser.id),
@@ -213,101 +243,124 @@ const App = () => {
         <Route
           path="/"
           element={
-            <Layout
-              cartCount={cartCount}
-              currentUser={currentUser}
-              onLogout={logout}
-              children={
-                <HomePage
-                  addToCart={addToCart}
-                  wishlist={wishlist}
-                  toggleWishlist={toggleWishlist}
-                />
-              }
-            />
+            <ProtectedRoute currentUser={currentUser}>
+              <Layout
+                cartCount={cartCount}
+                currentUser={currentUser}
+                onLogout={logout}
+                children={
+                  <HomePage
+                    addToCart={addToCart}
+                    wishlist={wishlist}
+                    toggleWishlist={toggleWishlist}
+                  />
+                }
+              />
+            </ProtectedRoute>
           }
         />
         <Route
           path="/menu"
           element={
-            <Layout
-              cartCount={cartCount}
-              currentUser={currentUser}
-              onLogout={logout}
-              children={<MenuPage addToCart={addToCart} />}
-            />
+            <ProtectedRoute currentUser={currentUser}>
+              <Layout
+                cartCount={cartCount}
+                currentUser={currentUser}
+                onLogout={logout}
+                children={<MenuPage addToCart={addToCart} />}
+              />
+            </ProtectedRoute>
           }
         />
         <Route
           path="/cart"
           element={
-            <Layout
-              cartCount={cartCount}
-              currentUser={currentUser}
-              onLogout={logout}
-              children={
-                <CartPage
-                  cart={cart}
-                  updateQuantity={updateQuantity}
-                  removeFromCart={removeFromCart}
-                  currentUser={currentUser}
-                />
-              }
-            />
+            <ProtectedRoute currentUser={currentUser}>
+              <Layout
+                cartCount={cartCount}
+                currentUser={currentUser}
+                onLogout={logout}
+                children={
+                  <CartPage
+                    cart={cart}
+                    updateQuantity={updateQuantity}
+                    removeFromCart={removeFromCart}
+                    currentUser={currentUser}
+                  />
+                }
+              />
+            </ProtectedRoute>
           }
         />
         <Route
           path="/checkout"
           element={
-            <Layout
-              cartCount={cartCount}
-              currentUser={currentUser}
-              onLogout={logout}
-              children={
-                <CheckoutPage
-                  cart={cart}
-                  currentUser={currentUser}
-                  onCheckoutSuccess={() => {
-                    if (currentUser) {
-                      dbService.setCart(currentUser.id, []);
-                      setCart([]);
-                    }
-                  }}
-                />
-              }
-            />
+            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer"]}>
+              <Layout
+                cartCount={cartCount}
+                currentUser={currentUser}
+                onLogout={logout}
+                children={
+                  <CheckoutPage
+                    cart={cart}
+                    currentUser={currentUser}
+                    onCheckoutSuccess={() => {
+                      if (currentUser) {
+                        dbService.setCart(currentUser.id, []);
+                        setCart([]);
+                      }
+                    }}
+                  />
+                }
+              />
+            </ProtectedRoute>
           }
         />
         <Route
           path="/profile"
           element={
-            <Layout
-              cartCount={cartCount}
-              currentUser={currentUser}
-              onLogout={logout}
-              children={<ProfilePage currentUser={currentUser} />}
-            />
+            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer", "admin"]}>
+              <Layout
+                cartCount={cartCount}
+                currentUser={currentUser}
+                onLogout={logout}
+                children={<ProfilePage currentUser={currentUser} />}
+              />
+            </ProtectedRoute>
           }
         />
         <Route
           path="/orders"
           element={
-            <Layout
-              cartCount={cartCount}
-              currentUser={currentUser}
-              onLogout={logout}
-              children={<OrderHistoryPage currentUser={currentUser} />}
-            />
+            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer"]}>
+              <Layout
+                cartCount={cartCount}
+                currentUser={currentUser}
+                onLogout={logout}
+                children={<OrderHistoryPage currentUser={currentUser} />}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:orderId"
+          element={
+            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer", "admin"]}>
+              <Layout
+                cartCount={cartCount}
+                currentUser={currentUser}
+                onLogout={logout}
+                children={<OrderDetailPage currentUser={currentUser} />}
+              />
+            </ProtectedRoute>
           }
         />
         <Route
           path="/admin"
           element={
-            currentUser?.role === "admin" ? (
-              <AdminPage user={currentUser} onLogout={logout} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            <ProtectedRoute currentUser={currentUser} allowedRoles={["admin"]}>
+              <AdminPage user={currentUser!} onLogout={logout} />
+            </ProtectedRoute>
           }
         />
       </Routes>
