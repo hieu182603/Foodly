@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -11,7 +11,7 @@ import {
   Clock,
   LayoutDashboard,
 } from "lucide-react";
-import { DISHES } from "../mockData";
+import { dbService } from "../databaseService";
 import { Dish } from "../types";
 
 interface HomePageProps {
@@ -34,6 +34,7 @@ const HomePage = ({
   toggleWishlist,
 }: HomePageProps) => {
   const navigate = useNavigate();
+  const [dishes, setDishes] = useState<Dish[]>([]);
   const [search, setSearch] = useState("");
   const [onlyBestSeller, setOnlyBestSeller] = useState(false);
   const [priceRange, setPriceRange] = useState("all");
@@ -44,6 +45,18 @@ const HomePage = ({
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [addedId, setAddedId] = useState<number | null>(null);
 
+  useEffect(() => {
+    const loadDishes = async () => {
+      try {
+        const loadedDishes = await dbService.getDishes();
+        setDishes(loadedDishes);
+      } catch (error) {
+        console.error("Failed to load dishes:", error);
+      }
+    };
+    loadDishes();
+  }, []);
+
   const toggleCat = (cat: string) =>
     setSelectedCats((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
@@ -51,7 +64,7 @@ const HomePage = ({
 
   const filtered = useMemo(
     () =>
-      DISHES.filter((dish) => {
+      dishes.filter((dish) => {
         if (onlyBestSeller && !dish.isBestSeller) return false;
         if (priceRange === "under100" && dish.price >= 100000) return false;
         if (
@@ -72,7 +85,7 @@ const HomePage = ({
             ? b.price - a.price
             : 0,
       ),
-    [onlyBestSeller, priceRange, selectedCats, search, sortBy],
+    [dishes, onlyBestSeller, priceRange, selectedCats, search, sortBy],
   );
 
   const handleAdd = (dish: Dish) => {

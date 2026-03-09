@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Plus, Pencil, Trash2, X, Check, Search } from "lucide-react";
-import { ORDERS } from "../../mockData";
+import React, { useState, useEffect } from "react";
+import { Plus, Pencil, Trash2, X, Check, Search, Download } from "lucide-react";
+import { dbService } from "../../databaseService";
 import { Order, OrderStatus } from "../../types";
 
 const fmt = (p: number) => `${p.toLocaleString("vi-VN")}đ`;
@@ -27,7 +27,7 @@ const StatusBadge = ({ status }: { status: OrderStatus }) => {
 };
 
 const AdminOrders = () => {
-  const [orders, setOrders] = useState<Order[]>(ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<OrderStatus>("Pending");
@@ -38,6 +38,19 @@ const AdminOrders = () => {
     total: "",
   });
 
+  // Load orders from database
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const allOrders = await dbService.getOrders();
+        setOrders(allOrders);
+      } catch (error) {
+        console.error("Failed to load orders:", error);
+      }
+    };
+    loadOrders();
+  }, []);
+
   /* filter */
   const filtered = orders.filter(
     (o) =>
@@ -46,35 +59,58 @@ const AdminOrders = () => {
   );
 
   /* delete */
-  const handleDelete = (id: string) => {
-    if (window.confirm("Xóa đơn hàng này?"))
-      setOrders((prev) => prev.filter((o) => o.id !== id));
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Xóa đơn hàng này?")) {
+      try {
+        await dbService.deleteOrder(id);
+        const allOrders = await dbService.getOrders();
+        setOrders(allOrders);
+      } catch (error) {
+        console.error("Failed to delete order:", error);
+        alert("Không thể xóa đơn hàng. Vui lòng thử lại.");
+      }
+    }
   };
 
   /* save status edit */
-  const handleSaveStatus = (id: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: editStatus } : o)),
-    );
-    setEditingId(null);
+  const handleSaveStatus = async (id: string) => {
+    try {
+      await dbService.updateOrder(id, { status: editStatus });
+      const allOrders = await dbService.getOrders();
+      setOrders(allOrders);
+      setEditingId(null);
+    } catch (error) {
+      console.error("Failed to update order:", error);
+      alert("Không thể cập nhật đơn hàng. Vui lòng thử lại.");
+    }
   };
 
   /* add new order */
-  const handleAddOrder = () => {
+  const handleAddOrder = async () => {
     if (!newOrder.customer || !newOrder.table || !newOrder.total) return;
-    const id = `#ORD-${1000 + orders.length + 1}`;
-    setOrders((prev) => [
-      ...prev,
-      {
-        id,
-        customer: newOrder.customer,
-        table: newOrder.table,
-        total: Number(newOrder.total),
-        status: "Pending",
-      },
-    ]);
-    setNewOrder({ customer: "", table: "", total: "" });
-    setShowAdd(false);
+    const total = Number(newOrder.total);
+    if (isNaN(total) || total <= 0) {
+      alert("Tổng tiền phải là số dương!");
+      return;
+    }
+    const id = `#ORD-${Date.now()}`;
+    const order: Order = {
+      id,
+      customer: newOrder.customer,
+      table: newOrder.table,
+      total: total,
+      status: "Pending",
+    };
+    try {
+      await dbService.addOrder(order);
+      const allOrders = await dbService.getOrders();
+      setOrders(allOrders);
+      setNewOrder({ customer: "", table: "", total: "" });
+      setShowAdd(false);
+    } catch (error) {
+      console.error("Failed to add order:", error);
+      alert("Không thể thêm đơn hàng. Vui lòng thử lại.");
+    }
   };
 
   return (
@@ -87,12 +123,21 @@ const AdminOrders = () => {
           </h2>
           <p className="text-textSec text-sm">{orders.length} đơn hàng</p>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primaryDark transition-all text-sm shadow-md shadow-primary/20"
-        >
-          <Plus size={16} /> Thêm đơn
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => dbService.export()}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-textMain font-bold rounded-xl hover:bg-gray-200 transition-all text-sm"
+            title="Export database.json"
+          >
+            <Download size={16} /> Export DB
+          </button>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primaryDark transition-all text-sm shadow-md shadow-primary/20"
+          >
+            <Plus size={16} /> Thêm đơn
+          </button>
+        </div>
       </div>
 
       {/* Search */}

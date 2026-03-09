@@ -1,25 +1,41 @@
 import React, { useState, useEffect } from "react";
 import { Package, Calendar, DollarSign, ChevronRight, CheckCircle2, Clock } from "lucide-react";
 import { Order, User as UserType } from "../types";
-import { Navigate, useNavigate } from "react-router-dom";
-import { ORDERS } from "../mockData";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { dbService } from "../databaseService";
 
 const OrderHistoryPage = ({ currentUser }: { currentUser: UserType | null }) => {
     const navigate = useNavigate();
-    // Using some mock data or loading from localStorage "foodly_orders" not implemented in App.tsx right now, 
-    // so we'll just mock it or show empty state.
+    const location = useLocation();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
     if (!currentUser) return <Navigate to="/login" replace />;
 
     useEffect(() => {
-        // Mocking an async fetch
-        setTimeout(() => {
-            setOrders(ORDERS);
-            setLoading(false);
-        }, 500);
-    }, [currentUser]);
+        if (!currentUser) return;
+        
+        setLoading(true);
+        const loadOrders = async () => {
+            try {
+                // Load orders from database
+                const allOrders = await dbService.getOrders();
+                // Filter orders by current user
+                const userOrders = allOrders.filter(
+                    (order) => order.customer === currentUser.name
+                );
+                // Sort by ID (newest first)
+                userOrders.sort((a, b) => b.id.localeCompare(a.id));
+                setOrders(userOrders);
+            } catch (error) {
+                console.error("Failed to load orders:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        loadOrders();
+    }, [currentUser, location.pathname]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
