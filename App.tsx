@@ -11,28 +11,20 @@ import ForgotPasswordPage from "./page/ForgotPasswordPage";
 import MenuPage from "./page/MenuPage";
 import HomePage from "./page/HomePage";
 import CartPage from "./page/CartPage";
-import CheckoutPage from "./page/CheckoutPage";
 import AdminPage from "./page/AdminPage";
 import ProfilePage from "./page/ProfilePage";
 import OrderHistoryPage from "./page/OrderHistoryPage";
+import BookingPage from "./page/BookingPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import { dbService } from "./databaseService";
+import { USERS } from "./mockData";
 import { Dish, CartItem, User } from "./types";
 
-const loadCurrentUser = (): User | null => {
+const load = <T,>(key: string, fallback: T): T => {
   try {
-    return JSON.parse(localStorage.getItem("foodly_current_user") ?? "null");
+    return JSON.parse(localStorage.getItem(key) ?? "null") ?? fallback;
   } catch {
-    return null;
-  }
-};
-
-const saveCurrentUser = (user: User | null): void => {
-  if (user) {
-    localStorage.setItem("foodly_current_user", JSON.stringify(user));
-  } else {
-    localStorage.removeItem("foodly_current_user");
+    return fallback;
   }
 };
 
@@ -48,71 +40,37 @@ const Layout = ({
   children: React.ReactNode;
 }) => (
   <>
-    <Navbar cartCount={cartCount} currentUser={currentUser} onLogout={onLogout} />
+    <Navbar
+      cartCount={cartCount}
+      currentUser={currentUser}
+      onLogout={onLogout}
+    />
     <main>{children}</main>
     <Footer />
   </>
 );
 
 const App = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(() =>
-    loadCurrentUser(),
+  const [cart, setCart] = useState<CartItem[]>(() => load("foodly_cart", []));
+  const [wishlist, setWishlist] = useState<number[]>(() =>
+    load("foodly_wishlist", []),
   );
-  // Cart is loaded asynchronously in the effect below; keep initial state as an empty array
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<number[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>(() => load("foodly_users", USERS));
+  const [currentUser, setCurrentUser] = useState<User | null>(() =>
+    load("foodly_current_user", null),
+  );
 
-  // Load initial data
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        const loadedUsers = await dbService.getUsers();
-        setUsers(loadedUsers);
-        
-        if (currentUser) {
-          const [loadedCart, loadedWishlist] = await Promise.all([
-            dbService.getCart(currentUser.id),
-            dbService.getWishlist(currentUser.id),
-          ]);
-          setCart(loadedCart);
-          setWishlist(loadedWishlist);
-        } else {
-          setCart([]);
-          setWishlist([]);
-        }
-      } catch (error) {
-        console.error("Failed to load data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, [currentUser]);
-
-  // Save cart to database
+    localStorage.setItem("foodly_cart", JSON.stringify(cart));
+  }, [cart]);
   useEffect(() => {
-    if (currentUser && !isLoading) {
-      dbService.setCart(currentUser.id, cart).catch((error) => {
-        console.error("Failed to save cart:", error);
-      });
-    }
-  }, [cart, currentUser, isLoading]);
-
-  // Save wishlist to database
+    localStorage.setItem("foodly_wishlist", JSON.stringify(wishlist));
+  }, [wishlist]);
   useEffect(() => {
-    if (currentUser && !isLoading) {
-      dbService.setWishlist(currentUser.id, wishlist).catch((error) => {
-        console.error("Failed to save wishlist:", error);
-      });
-    }
-  }, [wishlist, currentUser, isLoading]);
-
-  // Save current user to localStorage (session data)
+    localStorage.setItem("foodly_users", JSON.stringify(users));
+  }, [users]);
   useEffect(() => {
-    saveCurrentUser(currentUser);
+    localStorage.setItem("foodly_current_user", JSON.stringify(currentUser));
   }, [currentUser]);
 
   const addToCart = (dish: Dish) =>
@@ -120,8 +78,8 @@ const App = () => {
       const found = prev.find((i) => i.id === dish.id);
       return found
         ? prev.map((i) =>
-          i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
-        )
+            i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
+          )
         : [...prev, { ...dish, quantity: 1 }];
     });
 
@@ -132,14 +90,9 @@ const App = () => {
 
   const updateQuantity = (id: number, delta: number) =>
     setCart((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const newQuantity = item.quantity + delta;
-          // Ensure quantity is at least 1
-          return { ...item, quantity: Math.max(1, newQuantity) };
-        }
-        return item;
-      }),
+      prev.map((item) =>
+        item.id === id ? { ...item, quantity: item.quantity + delta } : item,
+      ),
     );
 
   const removeFromCart = (id: number) =>
@@ -147,51 +100,37 @@ const App = () => {
 
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
-  const login = async (email: string, password: string): Promise<User | null> => {
-    try {
-      const allUsers = await dbService.getUsers();
-      const found = allUsers.find(
-        (u) =>
-          u.email.toLowerCase() === email.toLowerCase() &&
-          u.password === password,
-      );
-      if (!found) return null;
-      setCurrentUser(found);
-      setUsers(allUsers);
-      return found;
-    } catch (error) {
-      console.error("Login failed:", error);
-      return null;
-    }
+  const login = (email: string, password: string): User | null => {
+    const found = users.find(
+      (u) =>
+        u.email.toLowerCase() === email.toLowerCase() &&
+        u.password === password,
+    );
+    if (!found) return null;
+    setCurrentUser(found);
+    return found;
   };
 
-  const register = async (data: {
+  const register = (data: {
     name: string;
     email: string;
     password: string;
     role: User["role"];
-  }): Promise<{ user?: User; error?: string }> => {
-    try {
-      const allUsers = await dbService.getUsers();
-      const exists = allUsers.some(
-        (u) => u.email.toLowerCase() === data.email.toLowerCase(),
-      );
-      if (exists) {
-        return { error: "Email đã tồn tại, vui lòng dùng email khác." };
-      }
-      const newUser: User = {
-        id: allUsers.length ? Math.max(...allUsers.map((u) => u.id)) + 1 : 1,
-        ...data,
-      };
-      await dbService.addUser(newUser);
-      const updatedUsers = await dbService.getUsers();
-      setUsers(updatedUsers);
-      setCurrentUser(newUser);
-      return { user: newUser };
-    } catch (error) {
-      console.error("Registration failed:", error);
-      return { error: "Có lỗi xảy ra khi đăng ký. Vui lòng thử lại." };
+  }): { user?: User; error?: string } => {
+    const exists = users.some(
+      (u) => u.email.toLowerCase() === data.email.toLowerCase(),
+    );
+    if (exists) {
+      return { error: "Email đã tồn tại, vui lòng dùng email khác." };
     }
+    const newUser: User = {
+      id: users.length ? Math.max(...users.map((u) => u.id)) + 1 : 1,
+      ...data,
+    };
+    const next = [...users, newUser];
+    setUsers(next);
+    setCurrentUser(newUser);
+    return { user: newUser };
   };
 
   const logout = () => {
@@ -250,29 +189,6 @@ const App = () => {
                   cart={cart}
                   updateQuantity={updateQuantity}
                   removeFromCart={removeFromCart}
-                  currentUser={currentUser}
-                />
-              }
-            />
-          }
-        />
-        <Route
-          path="/checkout"
-          element={
-            <Layout
-              cartCount={cartCount}
-              currentUser={currentUser}
-              onLogout={logout}
-              children={
-                <CheckoutPage
-                  cart={cart}
-                  currentUser={currentUser}
-                  onCheckoutSuccess={() => {
-                    if (currentUser) {
-                      dbService.setCart(currentUser.id, []);
-                      setCart([]);
-                    }
-                  }}
                 />
               }
             />
@@ -297,6 +213,17 @@ const App = () => {
               currentUser={currentUser}
               onLogout={logout}
               children={<OrderHistoryPage currentUser={currentUser} />}
+            />
+          }
+        />
+        <Route
+          path="/booking"
+          element={
+            <Layout
+              cartCount={cartCount}
+              currentUser={currentUser}
+              onLogout={logout}
+              children={<BookingPage />}
             />
           }
         />

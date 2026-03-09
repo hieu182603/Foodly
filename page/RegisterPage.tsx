@@ -9,7 +9,7 @@ interface RegisterPageProps {
       email: string;
       password: string;
       role: UserRole;
-   }) => Promise<{ user?: unknown; error?: string }>;
+   }) => { user?: unknown; error?: string };
 }
 
 const RegisterPage = ({ onRegister }: RegisterPageProps) => {
@@ -19,10 +19,10 @@ const RegisterPage = ({ onRegister }: RegisterPageProps) => {
    const [password, setPassword] = useState("");
    const [error, setError] = useState<string | null>(null);
 
-   const handleSubmit = async (e: React.FormEvent) => {
+   const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       setError(null);
-      const { error: err } = await onRegister({
+      const { error: err } = onRegister({
          name,
          email,
          password,

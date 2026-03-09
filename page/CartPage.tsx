@@ -8,30 +8,18 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { CartItem, User } from "../types";
+import { CartItem } from "../types";
 
 interface CartPageProps {
   cart: CartItem[];
   updateQuantity: (id: number, delta: number) => void;
   removeFromCart: (id: number) => void;
-  currentUser: User | null;
 }
 
-const CartPage = ({ cart, updateQuantity, removeFromCart, currentUser }: CartPageProps) => {
+const CartPage = ({ cart, updateQuantity, removeFromCart }: CartPageProps) => {
   const navigate = useNavigate();
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const formattedTotal = (total / 25000).toFixed(2);
-
-  const handleCheckout = () => {
-    if (!currentUser) {
-      navigate("/login");
-      return;
-    }
-    if (cart.length === 0) return;
-    
-    // Navigate to checkout page
-    navigate("/checkout");
-  };
 
   if (cart.length === 0) {
     return (
@@ -111,13 +99,8 @@ const CartPage = ({ cart, updateQuantity, removeFromCart, currentUser }: CartPag
                   <span className="text-3xl font-black text-primary">${formattedTotal}</span>
                </div>
 
-               <button 
-                 onClick={handleCheckout}
-                 disabled={!currentUser}
-                 className="w-full bg-primary hover:bg-primaryDark disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-sm"
-               >
-                  <ClipboardList size={20} /> 
-                  Checkout
+               <button className="w-full bg-primary hover:bg-primaryDark text-white font-black py-4 rounded-2xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-sm">
+                  <ClipboardList size={20} /> Checkout
                </button>
             </div>
          </div>

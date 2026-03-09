@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, LayoutDashboard, Plus, ChevronDown, Check } from 'lucide-react';
-import { dbService } from '../databaseService';
+import { DISHES } from '../mockData';
 import { Dish } from '../types';
 
 interface MenuPageProps {
@@ -8,7 +8,6 @@ interface MenuPageProps {
 }
 
 const MenuPage = ({ addToCart }: MenuPageProps) => {
-  const [dishes, setDishes] = useState<Dish[]>([]);
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc'>('popular');
@@ -17,19 +16,7 @@ const MenuPage = ({ addToCart }: MenuPageProps) => {
   
   const categories = ['All', 'Pizza', 'Burger', 'Main', 'Salad', 'Drink', 'Dessert'];
   
-  useEffect(() => {
-    const loadDishes = async () => {
-      try {
-        const loadedDishes = await dbService.getDishes();
-        setDishes(loadedDishes);
-      } catch (error) {
-        console.error("Failed to load dishes:", error);
-      }
-    };
-    loadDishes();
-  }, []);
-  
-  const filteredDishes = dishes.filter(dish => {
+  const filteredDishes = DISHES.filter(dish => {
     const matchesCategory = filter === 'All' || dish.category === filter;
     const matchesSearch = dish.name.toLowerCase().includes(search.toLowerCase());
     return matchesCategory && matchesSearch;
