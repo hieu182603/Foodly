@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, X, Check, Search, Download, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Check, Search, Download, Eye, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { dbService } from "../../databaseService";
 import { Order, OrderStatus } from "../../types";
 
 const fmt = (p: number) => `${p.toLocaleString("vi-VN")}đ`;
+
+const STATUS_LABELS: Record<OrderStatus, string> = {
+  Pending: "Chờ xác nhận",
+  Cooking: "Đang chế biến",
+  Completed: "Đã hoàn thành",
+  Cancelled: "Đã hủy",
+};
 
 const STATUS_OPTIONS: OrderStatus[] = [
   "Pending",
@@ -21,8 +28,8 @@ const StatusBadge = ({ status }: { status: OrderStatus }) => {
     Cancelled: "bg-red-100 text-red-700",
   };
   return (
-    <span className={`px-3 py-1 text-xs font-bold rounded-full ${map[status]}`}>
-      {status}
+    <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm border ${map[status]} ${status === 'Pending' ? 'border-blue-200' : status === 'Cooking' ? 'border-orange-200' : status === 'Completed' ? 'border-green-200' : 'border-red-200'}`}>
+      {STATUS_LABELS[status]}
     </span>
   );
 };
@@ -33,6 +40,10 @@ const AdminOrders = () => {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<OrderStatus>("Pending");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [typeFilter, setTypeFilter] = useState<string>("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
 
   // Load orders from database
   useEffect(() => {
@@ -47,11 +58,29 @@ const AdminOrders = () => {
     loadOrders();
   }, []);
 
-  /* filter */
-  const filtered = orders.filter(
-    (o) =>
+  /* filter logic */
+  const filtered = orders.filter((o) => {
+    const matchesSearch =
       o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.customer.toLowerCase().includes(search.toLowerCase()),
+      o.customer.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || o.status === statusFilter;
+    const matchesType =
+      typeFilter === "All" ||
+      (typeFilter === "Takeaway" && o.deliveryOption === "takeaway") ||
+      (typeFilter === "Delivery" && o.deliveryOption === "delivery");
+
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  // Reset to first page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, typeFilter]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedOrders = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
   /* delete */
@@ -102,19 +131,51 @@ const AdminOrders = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search
-          size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-        />
-        <input
-          type="text"
-          placeholder="Tìm theo ID hoặc khách hàng..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 h-10 rounded-xl bg-white border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary"
-        />
+      {/* Search & Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1 max-w-2xl transition-all focus-within:max-w-3xl">
+          <Search
+            size={16}
+            className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            type="text"
+            placeholder="Tìm theo mã đơn hoặc tên khách hàng..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-14 pr-4 h-12 rounded-2xl bg-white border border-gray-100 text-sm outline-none focus:ring-4 focus:ring-primary/10 shadow-sm transition-all placeholder:text-gray-300 font-medium"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 h-11 shadow-sm">
+            <Filter size={14} className="text-gray-400" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-transparent border-none text-sm font-bold text-textMain outline-none min-w-[124px]"
+            >
+              <option value="All">Tất cả trạng thái</option>
+              <option value="Pending">Chờ xác nhận</option>
+              <option value="Cooking">Đang chế biến</option>
+              <option value="Completed">Đã hoàn thành</option>
+              <option value="Cancelled">Đã hủy</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 h-11 shadow-sm">
+            <Filter size={14} className="text-gray-400" />
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="bg-transparent border-none text-sm font-bold text-textMain outline-none min-w-[124px]"
+            >
+              <option value="All">Tất cả hình thức</option>
+              <option value="Takeaway">Mang đi</option>
+              <option value="Delivery">Giao hàng</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Table */}
@@ -137,18 +198,20 @@ const AdminOrders = () => {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.map((o) => (
+            <tbody className="divide-y divide-gray-50 uppercase text-[11px] tracking-tight">
+              {paginatedOrders.map((o) => (
                 <tr
                   key={o.id}
-                  className="hover:bg-gray-50/60 transition-colors"
+                  className="hover:bg-gray-50/60 transition-colors group"
                 >
-                  <td className="px-5 py-4 font-bold text-primary">{o.id}</td>
-                  <td className="px-5 py-4 font-medium">{o.customer}</td>
-                  <td className="px-5 py-4 text-gray-500">
-                    {o.deliveryOption === 'takeaway' ? 'Mang đi' : 'Giao hàng'}
+                  <td className="px-5 py-5 font-black text-primary border-l-4 border-transparent group-hover:border-primary transition-all">
+                    {o.id}
                   </td>
-                  <td className="px-5 py-4 font-bold">{fmt(o.total)}</td>
+                  <td className="px-5 py-5 font-bold text-textMain">{o.customer}</td>
+                  <td className="px-5 py-5 font-bold text-textSec">
+                    {o.deliveryOption === 'takeaway' ? 'MANG ĐI' : 'GIAO HÀNG'}
+                  </td>
+                  <td className="px-5 py-5 font-black text-textMain">{fmt(o.total)}</td>
                   <td className="px-5 py-4">
                     {editingId === o.id ? (
                       <select
@@ -156,10 +219,12 @@ const AdminOrders = () => {
                         onChange={(e) =>
                           setEditStatus(e.target.value as OrderStatus)
                         }
-                        className="text-xs rounded-lg border border-gray-200 px-2 py-1 outline-none focus:ring-2 focus:ring-primary"
+                        className="text-xs rounded-lg border border-gray-200 px-2 py-1 outline-none focus:ring-2 focus:ring-primary bg-white font-bold"
                       >
                         {STATUS_OPTIONS.map((s) => (
-                          <option key={s}>{s}</option>
+                          <option key={s} value={s}>
+                            {STATUS_LABELS[s]}
+                          </option>
                         ))}
                       </select>
                     ) : (
@@ -227,6 +292,46 @@ const AdminOrders = () => {
           </table>
         </div>
       </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mt-4">
+          <p className="text-[10px] font-black text-textSec uppercase tracking-widest">
+            Hiển thị <span className="text-primary">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> -{" "}
+            <span className="text-primary">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</span> của{" "}
+            <span className="text-primary">{filtered.length}</span> đơn hàng
+          </p>
+          <div className="flex gap-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:border-primary/30 group"
+            >
+              <ChevronLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+            </button>
+            <div className="flex gap-1.5">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === i + 1
+                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
+                    : "bg-gray-50 text-textSec hover:bg-white hover:border-gray-200 border border-transparent"
+                    }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:border-primary/30 group"
+            >
+              <ChevronRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,121 +1,98 @@
 import { Dish, Order, User, CartItem } from "./types";
+import { supabase } from "./supabase";
 
-const API_BASE_URL = "http://localhost:9999";
-
-// Helper function for API calls
-const apiCall = async <T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
-      },
-      ...options,
-    });
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`API call failed for ${endpoint}:`, error);
-    throw error;
-  }
-};
-
-// Database service API
+// Database service API using Supabase
 export const dbService = {
   // Get all dishes
   getDishes: async (): Promise<Dish[]> => {
-    return apiCall<Dish[]>("/dishes");
+    const { data, error } = await supabase
+      .from("dishes")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) throw error;
+    return data || [];
   },
 
   // Get all orders
   getOrders: async (): Promise<Order[]> => {
-    return apiCall<Order[]>("/orders");
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("createdAt", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
   },
 
   // Get all users
   getUsers: async (): Promise<User[]> => {
-    return apiCall<User[]>("/users");
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) throw error;
+    return data || [];
   },
 
   // Get cart for user
   getCart: async (userId: number): Promise<CartItem[]> => {
-    try {
-      const carts = await apiCall<Record<number, CartItem[]>>("/carts");
-      return carts[userId] || [];
-    } catch {
-      return [];
-    }
+    const { data, error } = await supabase
+      .from("users")
+      .select("cart")
+      .eq("id", userId)
+      .single();
+
+    if (error) return [];
+    return data?.cart || [];
   },
 
   // Set cart for user
   setCart: async (userId: number, cart: CartItem[]): Promise<void> => {
-    try {
-      const carts = await apiCall<Record<number, CartItem[]>>("/carts").catch(
-        () => ({})
-      );
-      await apiCall("/carts", {
-        method: "PUT",
-        body: JSON.stringify({
-          ...carts,
-          [userId]: cart,
-        }),
-      });
-    } catch (error) {
+    const { error } = await supabase
+      .from("users")
+      .update({ cart })
+      .eq("id", userId);
+
+    if (error) {
       console.error("Failed to save cart:", error);
+      throw error;
     }
   },
 
   // Get wishlist for user
   getWishlist: async (userId: number): Promise<number[]> => {
-    try {
-      const wishlists = await apiCall<Record<number, number[]>>("/wishlists");
-      return wishlists[userId] || [];
-    } catch {
-      return [];
-    }
+    const { data, error } = await supabase
+      .from("users")
+      .select("wishlist")
+      .eq("id", userId)
+      .single();
+
+    if (error) return [];
+    return data?.wishlist || [];
   },
 
   // Set wishlist for user
   setWishlist: async (userId: number, wishlist: number[]): Promise<void> => {
-    try {
-      const wishlists = await apiCall<Record<number, number[]>>(
-        "/wishlists"
-      ).catch(() => ({}));
-      await apiCall("/wishlists", {
-        method: "PUT",
-        body: JSON.stringify({
-          ...wishlists,
-          [userId]: wishlist,
-        }),
-      });
-    } catch (error) {
+    const { error } = await supabase
+      .from("users")
+      .update({ wishlist })
+      .eq("id", userId);
+
+    if (error) {
       console.error("Failed to save wishlist:", error);
+      throw error;
     }
   },
 
   // Add order
   addOrder: async (order: Order): Promise<void> => {
-    try {
-      // Check if order already exists
-      const orders = await dbService.getOrders();
-      const exists = orders.some((o) => o.id === order.id);
-      if (exists) {
-        console.warn(`Order ${order.id} already exists, skipping...`);
-        return;
-      }
+    const { error } = await supabase
+      .from("orders")
+      .insert([order]);
 
-      await apiCall("/orders", {
-        method: "POST",
-        body: JSON.stringify(order),
-      });
-    } catch (error) {
+    if (error) {
       console.error("Failed to add order:", error);
       throw error;
     }
@@ -126,12 +103,12 @@ export const dbService = {
     orderId: string,
     updates: Partial<Order>
   ): Promise<void> => {
-    try {
-      await apiCall(`/orders/${orderId}`, {
-        method: "PATCH",
-        body: JSON.stringify(updates),
-      });
-    } catch (error) {
+    const { error } = await supabase
+      .from("orders")
+      .update(updates)
+      .eq("id", orderId);
+
+    if (error) {
       console.error("Failed to update order:", error);
       throw error;
     }
@@ -139,24 +116,24 @@ export const dbService = {
 
   // Delete order
   deleteOrder: async (orderId: string): Promise<void> => {
-    try {
-      await apiCall(`/orders/${orderId}`, {
-        method: "DELETE",
-      });
-    } catch (error) {
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", orderId);
+
+    if (error) {
       console.error("Failed to delete order:", error);
       throw error;
     }
   },
 
-  // Add user
+  // Add user (Sign up)
   addUser: async (user: User): Promise<void> => {
-    try {
-      await apiCall("/users", {
-        method: "POST",
-        body: JSON.stringify(user),
-      });
-    } catch (error) {
+    const { error } = await supabase
+      .from("users")
+      .insert([user]);
+
+    if (error) {
       console.error("Failed to add user:", error);
       throw error;
     }
@@ -167,34 +144,30 @@ export const dbService = {
     userId: number,
     updates: Partial<User>
   ): Promise<void> => {
-    try {
-      await apiCall(`/users/${userId}`, {
-        method: "PATCH",
-        body: JSON.stringify(updates),
-      });
-    } catch (error) {
+    const { error } = await supabase
+      .from("users")
+      .update(updates)
+      .eq("id", userId);
+
+    if (error) {
       console.error("Failed to update user:", error);
       throw error;
     }
   },
 
-  // Export database (get all data and download as JSON)
+  // Export database (Keep logic for JSON download)
   export: async (): Promise<void> => {
     try {
-      const [dishes, orders, users, carts, wishlists] = await Promise.all([
+      const [dishes, orders, users] = await Promise.all([
         dbService.getDishes(),
         dbService.getOrders(),
         dbService.getUsers(),
-        apiCall<Record<number, CartItem[]>>("/carts").catch(() => ({})),
-        apiCall<Record<number, number[]>>("/wishlists").catch(() => ({})),
       ]);
 
       const db = {
         dishes,
         orders,
         users,
-        carts,
-        wishlists,
       };
 
       const dataStr = JSON.stringify(db, null, 4);
@@ -202,7 +175,7 @@ export const dbService = {
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "database.json";
+      link.download = "supabase_export.json";
       document.body.appendChild(link);
       link.click();
       link.remove();
