@@ -14,7 +14,7 @@ const OrderHistoryPage = ({ currentUser }: { currentUser: UserType | null }) => 
 
     useEffect(() => {
         if (!currentUser) return;
-        
+
         setLoading(true);
         const loadOrders = async () => {
             try {
@@ -33,7 +33,7 @@ const OrderHistoryPage = ({ currentUser }: { currentUser: UserType | null }) => 
                 setLoading(false);
             }
         };
-        
+
         loadOrders();
     }, [currentUser, location.pathname]);
 
@@ -95,7 +95,8 @@ const OrderHistoryPage = ({ currentUser }: { currentUser: UserType | null }) => 
                         {orders.map((order) => (
                             <div
                                 key={order.id}
-                                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col md:flex-row gap-6 md:items-center justify-between group"
+                                onClick={() => navigate(`/orders/${order.id}`)}
+                                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col md:flex-row gap-6 md:items-center justify-between group cursor-pointer"
                             >
                                 <div className="flex items-start gap-4 flex-1">
                                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 group-hover:bg-primary/5 group-hover:border-primary/20 transition-colors">
@@ -110,7 +111,7 @@ const OrderHistoryPage = ({ currentUser }: { currentUser: UserType | null }) => 
                                             </span>
                                         </div>
                                         <p className="text-textSec text-sm flex items-center gap-1">
-                                            <span>Loại: {order.table}</span>
+                                            <span>Loại: {order.deliveryOption === 'delivery' ? 'Giao hàng' : 'Mang đi'}</span>
                                         </p>
                                     </div>
                                 </div>

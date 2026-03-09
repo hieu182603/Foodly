@@ -104,6 +104,29 @@
       "table": "Take away",
       "total": 475000,
       "status": "Pending"
+    },
+    {
+      "id": "ORD-1773064548533",
+      "userId": 1,
+      "customer": "Customer Demo",
+      "items": [
+        {
+          "id": 6,
+          "name": "Caesar Salad",
+          "description": "Crisp romaine lettuce, parmesan cheese, croutons, and creamy Caesar dressing.",
+          "price": 125000,
+          "image": "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=600&q=80",
+          "category": "Salad",
+          "quantity": 1
+        }
+      ],
+      "address": "adsa",
+      "phone": "09123423423",
+      "paymentMethod": "cash",
+      "deliveryOption": "delivery",
+      "total": 155000,
+      "status": "Cancelled",
+      "createdAt": "2026-03-09T13:55:48.533Z"
     }
   ],
   "users": [
@@ -123,9 +146,11 @@
     }
   ],
   "carts": {
-    "1": []
+    "1": [],
+    "2": []
   },
   "wishlists": {
-    "1": []
+    "1": [],
+    "2": []
   }
 }

@@ -127,22 +127,9 @@ export const dbService = {
     updates: Partial<Order>
   ): Promise<void> => {
     try {
-      const orders = await dbService.getOrders();
-      const orderIndex = orders.findIndex((o) => o.id === orderId);
-      if (orderIndex === -1) {
-        throw new Error(`Order ${orderId} not found`);
-      }
-
-      // json-server uses array index for updates, but we need to update by id
-      // Since orders use string id, we'll replace the entire array
-      const updatedOrders = orders.map((o) =>
-        o.id === orderId ? { ...o, ...updates } : o
-      );
-
-      // Replace entire orders array
-      await apiCall("/orders", {
-        method: "PUT",
-        body: JSON.stringify(updatedOrders),
+      await apiCall(`/orders/${orderId}`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
       });
     } catch (error) {
       console.error("Failed to update order:", error);
@@ -153,20 +140,8 @@ export const dbService = {
   // Delete order
   deleteOrder: async (orderId: string): Promise<void> => {
     try {
-      const orders = await dbService.getOrders();
-      const orderIndex = orders.findIndex((o) => o.id === orderId);
-      if (orderIndex === -1) {
-        console.warn(`Order ${orderId} not found`);
-        return;
-      }
-
-      // Remove order from array
-      const updatedOrders = orders.filter((o) => o.id !== orderId);
-
-      // Replace entire orders array
-      await apiCall("/orders", {
-        method: "PUT",
-        body: JSON.stringify(updatedOrders),
+      await apiCall(`/orders/${orderId}`, {
+        method: "DELETE",
       });
     } catch (error) {
       console.error("Failed to delete order:", error);

@@ -35,8 +35,14 @@ export type OrderStatus = "Completed" | "Cooking" | "Cancelled" | "Pending";
 
 export interface Order {
     id: string;
+    userId: number;
     customer: string;
-    table: string;
+    items: CartItem[];
+    address?: string;
+    phone?: string;
+    paymentMethod: "cash" | "card";
+    deliveryOption: "takeaway" | "delivery";
     total: number;
     status: OrderStatus;
+    createdAt: string;
 }

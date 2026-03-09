@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, X, Check, Search, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Check, Search, Download, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { dbService } from "../../databaseService";
 import { Order, OrderStatus } from "../../types";
 
@@ -27,16 +28,11 @@ const StatusBadge = ({ status }: { status: OrderStatus }) => {
 };
 
 const AdminOrders = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<OrderStatus>("Pending");
-  const [showAdd, setShowAdd] = useState(false);
-  const [newOrder, setNewOrder] = useState({
-    customer: "",
-    table: "",
-    total: "",
-  });
 
   // Load orders from database
   useEffect(() => {
@@ -85,34 +81,6 @@ const AdminOrders = () => {
     }
   };
 
-  /* add new order */
-  const handleAddOrder = async () => {
-    if (!newOrder.customer || !newOrder.table || !newOrder.total) return;
-    const total = Number(newOrder.total);
-    if (isNaN(total) || total <= 0) {
-      alert("Tổng tiền phải là số dương!");
-      return;
-    }
-    const id = `#ORD-${Date.now()}`;
-    const order: Order = {
-      id,
-      customer: newOrder.customer,
-      table: newOrder.table,
-      total: total,
-      status: "Pending",
-    };
-    try {
-      await dbService.addOrder(order);
-      const allOrders = await dbService.getOrders();
-      setOrders(allOrders);
-      setNewOrder({ customer: "", table: "", total: "" });
-      setShowAdd(false);
-    } catch (error) {
-      console.error("Failed to add order:", error);
-      alert("Không thể thêm đơn hàng. Vui lòng thử lại.");
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Heading */}
@@ -130,12 +98,6 @@ const AdminOrders = () => {
             title="Export database.json"
           >
             <Download size={16} /> Export DB
-          </button>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primaryDark transition-all text-sm shadow-md shadow-primary/20"
-          >
-            <Plus size={16} /> Thêm đơn
           </button>
         </div>
       </div>
@@ -155,66 +117,6 @@ const AdminOrders = () => {
         />
       </div>
 
-      {/* Add form */}
-      {showAdd && (
-        <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 flex flex-col sm:flex-row gap-3 items-end">
-          <div className="flex-1">
-            <label className="text-xs font-semibold text-textSec mb-1 block">
-              Khách hàng
-            </label>
-            <input
-              value={newOrder.customer}
-              onChange={(e) =>
-                setNewOrder({ ...newOrder, customer: e.target.value })
-              }
-              className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Tên khách..."
-            />
-          </div>
-          <div className="w-32">
-            <label className="text-xs font-semibold text-textSec mb-1 block">
-              Bàn
-            </label>
-            <input
-              value={newOrder.table}
-              onChange={(e) =>
-                setNewOrder({ ...newOrder, table: e.target.value })
-              }
-              className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary"
-              placeholder="T1..."
-            />
-          </div>
-          <div className="w-40">
-            <label className="text-xs font-semibold text-textSec mb-1 block">
-              Tổng tiền (đ)
-            </label>
-            <input
-              type="number"
-              value={newOrder.total}
-              onChange={(e) =>
-                setNewOrder({ ...newOrder, total: e.target.value })
-              }
-              className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary"
-              placeholder="250000"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleAddOrder}
-              className="h-9 px-4 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primaryDark transition-all flex items-center gap-1"
-            >
-              <Check size={14} /> Lưu
-            </button>
-            <button
-              onClick={() => setShowAdd(false)}
-              className="h-9 px-3 rounded-lg border border-gray-200 text-sm text-textSec hover:bg-white transition-all"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -224,7 +126,7 @@ const AdminOrders = () => {
                 {[
                   "ID",
                   "Khách hàng",
-                  "Bàn",
+                  "Loại",
                   "Tổng tiền",
                   "Trạng thái",
                   "Hành động",
@@ -243,7 +145,9 @@ const AdminOrders = () => {
                 >
                   <td className="px-5 py-4 font-bold text-primary">{o.id}</td>
                   <td className="px-5 py-4 font-medium">{o.customer}</td>
-                  <td className="px-5 py-4 text-gray-500">{o.table}</td>
+                  <td className="px-5 py-4 text-gray-500">
+                    {o.deliveryOption === 'takeaway' ? 'Mang đi' : 'Giao hàng'}
+                  </td>
                   <td className="px-5 py-4 font-bold">{fmt(o.total)}</td>
                   <td className="px-5 py-4">
                     {editingId === o.id ? (
@@ -281,6 +185,13 @@ const AdminOrders = () => {
                         </>
                       ) : (
                         <>
+                          <button
+                            onClick={() => navigate(`/orders/${o.id}`)}
+                            className="text-primary hover:text-primaryDark p-1.5 rounded-lg hover:bg-orange-50 transition-all"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={15} />
+                          </button>
                           <button
                             onClick={() => {
                               setEditingId(o.id);
