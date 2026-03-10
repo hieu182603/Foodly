@@ -1,4 +1,4 @@
-import { Dish, Order, User, CartItem } from "./types";
+import { Dish, Order, User, CartItem, Booking, Table } from "./types";
 import { supabase } from "./supabase";
 
 // Database service API using Supabase
@@ -88,9 +88,7 @@ export const dbService = {
 
   // Add order
   addOrder: async (order: Order): Promise<void> => {
-    const { error } = await supabase
-      .from("orders")
-      .insert([order]);
+    const { error } = await supabase.from("orders").insert([order]);
 
     if (error) {
       console.error("Failed to add order:", error);
@@ -101,7 +99,7 @@ export const dbService = {
   // Update order
   updateOrder: async (
     orderId: string,
-    updates: Partial<Order>
+    updates: Partial<Order>,
   ): Promise<void> => {
     const { error } = await supabase
       .from("orders")
@@ -116,10 +114,7 @@ export const dbService = {
 
   // Delete order
   deleteOrder: async (orderId: string): Promise<void> => {
-    const { error } = await supabase
-      .from("orders")
-      .delete()
-      .eq("id", orderId);
+    const { error } = await supabase.from("orders").delete().eq("id", orderId);
 
     if (error) {
       console.error("Failed to delete order:", error);
@@ -127,11 +122,76 @@ export const dbService = {
     }
   },
 
+  // Get all tables
+  getTables: async (): Promise<Table[]> => {
+    const { data, error } = await supabase
+      .from("tables")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) {
+      console.error("Failed to get tables:", error);
+      return [];
+    }
+    return data || [];
+  },
+
+  // Get all bookings
+  getBookings: async (): Promise<Booking[]> => {
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("*")
+      .order("createdAt", { ascending: false });
+
+    if (error) {
+      console.error("Failed to get bookings:", error);
+      return [];
+    }
+    return data || [];
+  },
+
+  // Add booking
+  addBooking: async (booking: Booking): Promise<void> => {
+    const { error } = await supabase.from("bookings").insert([booking]);
+
+    if (error) {
+      console.error("Failed to add booking:", error);
+      throw error;
+    }
+  },
+
+  // Update booking
+  updateBooking: async (
+    bookingId: string,
+    updates: Partial<Booking>,
+  ): Promise<void> => {
+    const { error } = await supabase
+      .from("bookings")
+      .update(updates)
+      .eq("id", bookingId);
+
+    if (error) {
+      console.error("Failed to update booking:", error);
+      throw error;
+    }
+  },
+
+  // Delete booking
+  deleteBooking: async (bookingId: string): Promise<void> => {
+    const { error } = await supabase
+      .from("bookings")
+      .delete()
+      .eq("id", bookingId);
+
+    if (error) {
+      console.error("Failed to delete booking:", error);
+      throw error;
+    }
+  },
+
   // Add user (Sign up)
   addUser: async (user: User): Promise<void> => {
-    const { error } = await supabase
-      .from("users")
-      .insert([user]);
+    const { error } = await supabase.from("users").insert([user]);
 
     if (error) {
       console.error("Failed to add user:", error);
@@ -140,10 +200,7 @@ export const dbService = {
   },
 
   // Update user
-  updateUser: async (
-    userId: number,
-    updates: Partial<User>
-  ): Promise<void> => {
+  updateUser: async (userId: number, updates: Partial<User>): Promise<void> => {
     const { error } = await supabase
       .from("users")
       .update(updates)
@@ -158,16 +215,20 @@ export const dbService = {
   // Export database (Keep logic for JSON download)
   export: async (): Promise<void> => {
     try {
-      const [dishes, orders, users] = await Promise.all([
+      const [dishes, orders, users, bookings, tables] = await Promise.all([
         dbService.getDishes(),
         dbService.getOrders(),
         dbService.getUsers(),
+        dbService.getBookings(),
+        dbService.getTables(),
       ]);
 
       const db = {
         dishes,
         orders,
         users,
+        bookings,
+        tables,
       };
 
       const dataStr = JSON.stringify(db, null, 4);

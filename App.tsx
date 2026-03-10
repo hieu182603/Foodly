@@ -16,6 +16,8 @@ import AdminPage from "./page/AdminPage";
 import ProfilePage from "./page/ProfilePage";
 import OrderHistoryPage from "./page/OrderHistoryPage";
 import OrderDetailPage from "./page/OrderDetailPage";
+import BookingPage from "./page/BookingPage";
+import AdminBookingPage from "./page/admin/AdminBookingPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { dbService } from "./databaseService";
@@ -49,7 +51,11 @@ const Layout = ({
   children: React.ReactNode;
 }) => (
   <>
-    <Navbar cartCount={cartCount} currentUser={currentUser} onLogout={onLogout} />
+    <Navbar
+      cartCount={cartCount}
+      currentUser={currentUser}
+      onLogout={onLogout}
+    />
     <main>{children}</main>
     <Footer />
   </>
@@ -150,8 +156,8 @@ const App = () => {
       const found = prev.find((i) => i.id === dish.id);
       return found
         ? prev.map((i) =>
-          i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
-        )
+            i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
+          )
         : [...prev, { ...dish, quantity: 1 }];
     });
 
@@ -177,7 +183,10 @@ const App = () => {
 
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
-  const login = async (email: string, password: string): Promise<User | null> => {
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<User | null> => {
     try {
       const allUsers = await dbService.getUsers();
       const found = allUsers.find(
@@ -295,7 +304,10 @@ const App = () => {
         <Route
           path="/checkout"
           element={
-            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer"]}>
+            <ProtectedRoute
+              currentUser={currentUser}
+              allowedRoles={["customer"]}
+            >
               <Layout
                 cartCount={cartCount}
                 currentUser={currentUser}
@@ -319,7 +331,10 @@ const App = () => {
         <Route
           path="/profile"
           element={
-            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer", "admin"]}>
+            <ProtectedRoute
+              currentUser={currentUser}
+              allowedRoles={["customer", "admin"]}
+            >
               <Layout
                 cartCount={cartCount}
                 currentUser={currentUser}
@@ -332,7 +347,10 @@ const App = () => {
         <Route
           path="/orders"
           element={
-            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer"]}>
+            <ProtectedRoute
+              currentUser={currentUser}
+              allowedRoles={["customer"]}
+            >
               <Layout
                 cartCount={cartCount}
                 currentUser={currentUser}
@@ -345,12 +363,31 @@ const App = () => {
         <Route
           path="/orders/:orderId"
           element={
-            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer", "admin"]}>
+            <ProtectedRoute
+              currentUser={currentUser}
+              allowedRoles={["customer", "admin"]}
+            >
               <Layout
                 cartCount={cartCount}
                 currentUser={currentUser}
                 onLogout={logout}
                 children={<OrderDetailPage currentUser={currentUser} />}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/booking"
+          element={
+            <ProtectedRoute
+              currentUser={currentUser}
+              allowedRoles={["customer"]}
+            >
+              <Layout
+                cartCount={cartCount}
+                currentUser={currentUser}
+                onLogout={logout}
+                children={<BookingPage />}
               />
             </ProtectedRoute>
           }
