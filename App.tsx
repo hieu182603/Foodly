@@ -18,6 +18,7 @@ import OrderHistoryPage from "./page/OrderHistoryPage";
 import OrderDetailPage from "./page/OrderDetailPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import FoodDetailPage from "./page/FoodDetailPage";
 import { dbService } from "./databaseService";
 import { Dish, CartItem, User } from "./types";
 
@@ -145,14 +146,14 @@ const App = () => {
     saveCurrentUser(currentUser);
   }, [currentUser]);
 
-  const addToCart = (dish: Dish) =>
+  const addToCart = (dish: Dish, quantity: number = 1) =>
     setCart((prev) => {
       const found = prev.find((i) => i.id === dish.id);
       return found
         ? prev.map((i) =>
-          i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
+          i.id === dish.id ? { ...i, quantity: i.quantity + quantity } : i,
         )
-        : [...prev, { ...dish, quantity: 1 }];
+        : [...prev, { ...dish, quantity }];
     });
 
   const toggleWishlist = (id: number) =>
@@ -351,6 +352,25 @@ const App = () => {
                 currentUser={currentUser}
                 onLogout={logout}
                 children={<OrderDetailPage currentUser={currentUser} />}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dish/:dishId"
+          element={
+            <ProtectedRoute currentUser={currentUser}>
+              <Layout
+                cartCount={cartCount}
+                currentUser={currentUser}
+                onLogout={logout}
+                children={
+                  <FoodDetailPage
+                    addToCart={addToCart}
+                    wishlist={wishlist}
+                    toggleWishlist={toggleWishlist}
+                  />
+                }
               />
             </ProtectedRoute>
           }
