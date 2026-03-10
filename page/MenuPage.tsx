@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, LayoutDashboard, Plus, ChevronDown, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { dbService } from '../databaseService';
 import { Dish } from '../types';
 
@@ -8,6 +9,7 @@ interface MenuPageProps {
 }
 
 const MenuPage = ({ addToCart }: MenuPageProps) => {
+   const navigate = useNavigate();
    const [dishes, setDishes] = useState<Dish[]>([]);
    const [filter, setFilter] = useState('All');
    const [search, setSearch] = useState('');
@@ -122,13 +124,21 @@ const MenuPage = ({ addToCart }: MenuPageProps) => {
          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredDishes.map(dish => (
                <div key={dish.id} className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 transition-all hover:shadow-2xl hover:-translate-y-1 shadow-sm">
-                  <div className="relative w-full aspect-[4/3] overflow-hidden">
+                  <div
+                     onClick={() => navigate(`/dish/${dish.id}`)}
+                     className="relative w-full aspect-[4/3] overflow-hidden cursor-pointer"
+                  >
                      <img src={dish.image} alt={dish.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                      {dish.isBestSeller && <div className="absolute top-3 left-3 bg-white/90 px-3 py-1 rounded-full text-[10px] font-bold text-primary backdrop-blur-sm shadow-sm">Popular</div>}
                   </div>
                   <div className="p-5 flex flex-col flex-1">
                      <div className="flex justify-between items-start mb-2 gap-2">
-                        <h3 className="text-textMain text-lg font-bold leading-tight">{dish.name}</h3>
+                        <h3
+                           onClick={() => navigate(`/dish/${dish.id}`)}
+                           className="text-textMain text-lg font-bold leading-tight cursor-pointer hover:text-primary transition-colors"
+                        >
+                           {dish.name}
+                        </h3>
                         <span className="text-primary font-bold text-lg whitespace-nowrap">{fmt(dish.price)}</span>
                      </div>
                      <p className="text-textSec text-sm font-normal leading-relaxed mb-6 line-clamp-2">{dish.description}</p>

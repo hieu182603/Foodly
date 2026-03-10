@@ -228,11 +228,10 @@ const HomePage = ({
                   <button
                     key={String(opt.val)}
                     onClick={() => setOnlyBestSeller(opt.val)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-medium transition-all ${
-                      onlyBestSeller === opt.val
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-medium transition-all ${onlyBestSeller === opt.val
                         ? "bg-primary text-white"
                         : "text-textSec hover:text-textMain"
-                    }`}
+                      }`}
                   >
                     {onlyBestSeller === opt.val && (
                       <Check size={12} strokeWidth={3} />
@@ -299,11 +298,10 @@ const HomePage = ({
                           setSortBy(opt.id as any);
                           setIsSortOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-3 hover:bg-orange-50 text-sm font-medium transition-colors flex items-center justify-between ${
-                          sortBy === opt.id
+                        className={`w-full text-left px-4 py-3 hover:bg-orange-50 text-sm font-medium transition-colors flex items-center justify-between ${sortBy === opt.id
                             ? "text-primary bg-orange-50/50"
                             : "text-textMain"
-                        }`}
+                          }`}
                       >
                         {opt.label}
                         {sortBy === opt.id && (
@@ -324,11 +322,10 @@ const HomePage = ({
                   <button
                     key={cat}
                     onClick={() => toggleCat(cat)}
-                    className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-all border ${
-                      active
+                    className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-all border ${active
                         ? "bg-primary text-white border-primary"
                         : "bg-white text-textMain border-gray-200 hover:border-primary/50"
-                    }`}
+                      }`}
                   >
                     {active && <Check size={13} strokeWidth={3} />}
                     {cat}
@@ -372,7 +369,10 @@ const HomePage = ({
                   className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
                   {/* Image */}
-                  <div className="relative w-full aspect-[4/3] overflow-hidden">
+                  <div
+                    onClick={() => navigate(`/dish/${dish.id}`)}
+                    className="relative w-full aspect-[4/3] overflow-hidden cursor-pointer"
+                  >
                     <img
                       src={dish.image}
                       alt={dish.name}
@@ -385,11 +385,10 @@ const HomePage = ({
                     )}
                     <button
                       onClick={() => toggleWishlist?.(dish.id)}
-                      className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-all ${
-                        wishlist.includes(dish.id)
+                      className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-all ${wishlist.includes(dish.id)
                           ? "bg-red-500 text-white"
                           : "bg-white/80 text-gray-400 hover:text-red-500"
-                      }`}
+                        }`}
                     >
                       <Heart
                         size={14}
@@ -403,7 +402,10 @@ const HomePage = ({
                   {/* Info */}
                   <div className="p-5 flex flex-col flex-1">
                     <div className="flex justify-between items-start mb-1 gap-2">
-                      <h3 className="font-bold text-textMain text-base leading-tight">
+                      <h3
+                        onClick={() => navigate(`/dish/${dish.id}`)}
+                        className="font-bold text-textMain text-base leading-tight cursor-pointer hover:text-primary transition-colors"
+                      >
                         {dish.name}
                       </h3>
                       <span className="shrink-0 text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-lg">
@@ -419,11 +421,10 @@ const HomePage = ({
                       </span>
                       <button
                         onClick={() => handleAdd(dish)}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-                          addedId === dish.id
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${addedId === dish.id
                             ? "bg-green-500 text-white"
                             : "bg-primary text-white hover:bg-primaryDark shadow-md shadow-primary/20"
-                        }`}
+                          }`}
                       >
                         {addedId === dish.id ? (
                           <>
