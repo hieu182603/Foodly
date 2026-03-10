@@ -7,10 +7,11 @@ import {
   LogOut,
   ChefHat,
   ChevronRight,
+  CalendarDays,
 } from "lucide-react";
 import { User } from "../types";
 
-type AdminTab = "dashboard" | "orders" | "menu" | "users";
+type AdminTab = "dashboard" | "orders" | "menu" | "users" | "bookings";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -27,6 +28,7 @@ const NAV_ITEMS: {
 }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "orders", label: "Đơn hàng", icon: ShoppingCart },
+  { id: "bookings", label: "Đặt bàn", icon: CalendarDays },
   { id: "menu", label: "Thực đơn", icon: UtensilsCrossed },
   { id: "users", label: "Người dùng", icon: Users },
 ];
