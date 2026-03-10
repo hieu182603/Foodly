@@ -58,6 +58,7 @@ export interface Table {
 
 export interface Booking {
   id: string;
+  userId: number;
   name: string;
   phone: string;
   email?: string;

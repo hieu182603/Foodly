@@ -14,9 +14,9 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { dbService } from "../databaseService";
-import { Booking, Table } from "../types";
+import { Booking, Table, User as UserType } from "../types";
 
-const BookingPage = () => {
+const BookingPage = ({ currentUser }: { currentUser: UserType | null }) => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,9 +25,9 @@ const BookingPage = () => {
     date: "",
     time: "",
     guests: 2,
-    name: "",
+    name: currentUser?.name || "",
     phone: "",
-    email: "",
+    email: currentUser?.email || "",
     specialRequests: "",
     paymentMethod: "pay_at_restaurant",
     assignedTable: null as Table | null,
@@ -110,6 +110,7 @@ const BookingPage = () => {
 
       const newBooking: Booking = {
         id: `B-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`,
+        userId: currentUser?.id || 0,
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
@@ -267,11 +268,10 @@ const BookingPage = () => {
                       <button
                         key={time}
                         onClick={() => setFormData({ ...formData, time })}
-                        className={`h-12 rounded-xl border-2 font-bold transition-all ${
-                          formData.time === time
+                        className={`h-12 rounded-xl border-2 font-bold transition-all ${formData.time === time
                             ? "border-primary bg-primary text-white shadow-md shadow-primary/30"
                             : "border-gray-200 text-gray-600 hover:border-primary/50"
-                        }`}
+                          }`}
                       >
                         {time}
                       </button>
@@ -323,13 +323,12 @@ const BookingPage = () => {
                                 assignedTable: table,
                               }))
                             }
-                            className={`p-4 rounded-xl border-2 transition-all relative overflow-hidden ${
-                              isDisabled
+                            className={`p-4 rounded-xl border-2 transition-all relative overflow-hidden ${isDisabled
                                 ? "bg-gray-50 border-gray-100 opacity-60 cursor-not-allowed"
                                 : isSelected
                                   ? "border-primary bg-primary/5 cursor-pointer shadow-sm shadow-primary/10"
                                   : "border-gray-200 cursor-pointer hover:border-primary/40 bg-white"
-                            }`}
+                              }`}
                           >
                             {/* Disabled Overlay text */}
                             {isDisabled && (
