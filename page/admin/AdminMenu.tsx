@@ -5,13 +5,13 @@ import { supabase } from '../../supabase';
 import { Dish } from '../../types';
 import DishFormModal, { DishFormData } from '../../components/admin/DishFormModal';
 
-const CATEGORIES = ["Tất cả", "Món chính", "Khai vị", "Đồ uống", "Tráng miệng", "Pizza", "Burger", "Salad"];
+const CATEGORIES = ["All", "Main", "Appetizer", "Drink", "Dessert", "Pizza", "Burger", "Salad"];
 const ITEMS_PER_PAGE = 8;
 
 const AdminMenu = () => {
     const [dishes, setDishes] = useState<Dish[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeCategory, setActiveCategory] = useState("Tất cả");
+    const [activeCategory, setActiveCategory] = useState("All");
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -39,7 +39,7 @@ const AdminMenu = () => {
     // Logic xử lý lọc và tìm kiếm
     const filteredDishes = useMemo(() => {
         return dishes.filter(dish => {
-            const matchCategory = activeCategory === "Tất cả" || dish.category === activeCategory;
+            const matchCategory = activeCategory === "All" || dish.category === activeCategory;
             const matchSearch = dish.name.toLowerCase().includes(searchQuery.toLowerCase());
             return matchCategory && matchSearch;
         });
@@ -122,9 +122,7 @@ const AdminMenu = () => {
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
                 <div className="flex items-center gap-3">
-                    {/* <div className="w-10 h-10 bg-orange-100 flex items-center justify-center rounded-xl text-primary">
-                        <LayoutDashboard size={20} />
-                    </div> */}
+
                     <h1 className="text-2xl font-black text-textMain">Quản lý thực đơn</h1>
                 </div>
 
@@ -167,7 +165,7 @@ const AdminMenu = () => {
                                     }`}
                             >
                                 {cat}
-                                {cat === "Tất cả" && (
+                                {cat === "All" && (
                                     <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[10px] ${activeCategory === cat ? 'bg-white/20' : 'bg-gray-100'}`}>
                                         {dishes.length}
                                     </span>
