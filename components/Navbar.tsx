@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { UtensilsCrossed, ShoppingCart, Menu, X, User as UserIcon, LogOut, FileText, Settings } from "lucide-react";
+import { UtensilsCrossed, ShoppingCart, Menu, X, User as UserIcon, LogOut, FileText, Settings, Calendar } from "lucide-react";
 import { User } from "../types";
 
 interface NavbarProps {
@@ -19,6 +19,7 @@ const Navbar = ({ cartCount = 0, currentUser = null, onLogout }: NavbarProps) =>
   const links = [
     { label: "Home", path: "/" },
     { label: "Menu", path: "/menu" },
+    { label: "Đặt bàn", path: "/book-table" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -105,6 +106,16 @@ const Navbar = ({ cartCount = 0, currentUser = null, onLogout }: NavbarProps) =>
                     </button>
                     <button
                       onClick={() => {
+                        navigate("/bookings");
+                        setProfileDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary flex items-center gap-2 transition-colors"
+                    >
+                      <Calendar size={16} />
+                      Lịch sử đặt bàn
+                    </button>
+                    <button
+                      onClick={() => {
                         navigate("/orders");
                         setProfileDropdownOpen(false);
                       }}
@@ -157,8 +168,8 @@ const Navbar = ({ cartCount = 0, currentUser = null, onLogout }: NavbarProps) =>
                 setMenuOpen(false);
               }}
               className={`w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition-all ${isActive(link.path)
-                  ? "bg-primary/10 text-primary"
-                  : "text-textSec hover:bg-gray-50"
+                ? "bg-primary/10 text-primary"
+                : "text-textSec hover:bg-gray-50"
                 }`}
             >
               {link.label}
@@ -180,6 +191,16 @@ const Navbar = ({ cartCount = 0, currentUser = null, onLogout }: NavbarProps) =>
               >
                 <Settings size={18} />
                 Thông tin
+              </button>
+              <button
+                onClick={() => {
+                  navigate("/bookings");
+                  setMenuOpen(false);
+                }}
+                className="w-full text-left px-4 py-3 rounded-xl font-semibold text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <Calendar size={18} />
+                Lịch sử đặt bàn
               </button>
               <button
                 onClick={() => {
