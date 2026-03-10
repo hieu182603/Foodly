@@ -225,9 +225,7 @@ const FoodDetailPage = ({
                                     )}
                                 </button>
 
-                                <button className="h-14 border-2 border-gray-100 rounded-2xl font-bold text-textMain hover:border-primary/30 transition-all flex items-center justify-center gap-2">
-                                    <Share2 size={20} /> Chia sẻ
-                                </button>
+
                             </div>
                         </div>
 

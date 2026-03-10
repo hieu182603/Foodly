@@ -155,6 +155,16 @@ export const dbService = {
     }
   },
 
+  // Delete user
+  deleteUser: async (userId: number): Promise<void> => {
+    const { error } = await supabase.from("users").delete().eq("id", userId);
+
+    if (error) {
+      console.error("Failed to delete user:", error);
+      throw error;
+    }
+  },
+
   // Export database (Keep logic for JSON download)
   export: async (): Promise<void> => {
     try {
