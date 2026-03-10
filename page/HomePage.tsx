@@ -39,9 +39,9 @@ const HomePage = ({
   const [onlyBestSeller, setOnlyBestSeller] = useState(false);
   const [priceRange, setPriceRange] = useState("all");
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<"popular" | "price_asc" | "price_desc">(
-    "popular",
-  );
+  const [sortBy, setSortBy] = useState<
+    "popular" | "price_asc" | "price_desc" | "name_asc" | "name_desc"
+  >("popular");
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [addedId, setAddedId] = useState<number | null>(null);
 
@@ -64,27 +64,29 @@ const HomePage = ({
 
   const filtered = useMemo(
     () =>
-      dishes.filter((dish) => {
-        if (onlyBestSeller && !dish.isBestSeller) return false;
-        if (priceRange === "under100" && dish.price >= 100000) return false;
-        if (
-          priceRange === "100to200" &&
-          (dish.price < 100000 || dish.price > 200000)
-        )
-          return false;
-        if (priceRange === "over200" && dish.price <= 200000) return false;
-        if (selectedCats.length > 0 && !selectedCats.includes(dish.category))
-          return false;
-        if (search && !dish.name.toLowerCase().includes(search.toLowerCase()))
-          return false;
-        return true;
-      }).sort((a, b) =>
-        sortBy === "price_asc"
-          ? a.price - b.price
-          : sortBy === "price_desc"
-            ? b.price - a.price
-            : 0,
-      ),
+      dishes
+        .filter((dish) => {
+          if (onlyBestSeller && !dish.isBestSeller) return false;
+          if (priceRange === "under100" && dish.price >= 100000) return false;
+          if (
+            priceRange === "100to200" &&
+            (dish.price < 100000 || dish.price > 200000)
+          )
+            return false;
+          if (priceRange === "over200" && dish.price <= 200000) return false;
+          if (selectedCats.length > 0 && !selectedCats.includes(dish.category))
+            return false;
+          if (search && !dish.name.toLowerCase().includes(search.toLowerCase()))
+            return false;
+          return true;
+        })
+        .sort((a, b) => {
+          if (sortBy === "price_asc") return a.price - b.price;
+          if (sortBy === "price_desc") return b.price - a.price;
+          if (sortBy === "name_asc") return a.name.localeCompare(b.name);
+          if (sortBy === "name_desc") return b.name.localeCompare(a.name);
+          return 0; // popular
+        }),
     [dishes, onlyBestSeller, priceRange, selectedCats, search, sortBy],
   );
 
@@ -270,7 +272,11 @@ const HomePage = ({
                       ? "Popular"
                       : sortBy === "price_asc"
                         ? "Low → High"
-                        : "High → Low"}
+                        : sortBy === "price_desc"
+                          ? "High → Low"
+                          : sortBy === "name_asc"
+                            ? "A → Z"
+                            : "Z → A"}
                   </span>
                   <ChevronDown
                     size={14}
@@ -283,6 +289,8 @@ const HomePage = ({
                       { id: "popular", label: "Popular" },
                       { id: "price_asc", label: "Price: Low to High" },
                       { id: "price_desc", label: "Price: High to Low" },
+                      { id: "name_asc", label: "Name: A to Z" },
+                      { id: "name_desc", label: "Name: Z to A" },
                     ].map((opt) => (
                       <button
                         key={opt.id}
@@ -446,44 +454,40 @@ const HomePage = ({
         </div>
       </section>
 
-      {/* ── WHY US ── */}
-      <section className="py-20 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-textMain mb-3">
-              Why Choose Foodly?
-            </h2>
-            <div className="w-16 h-1.5 bg-primary mx-auto rounded-full" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: "🚀",
-                title: "Fast Delivery",
-                desc: "Orders delivered within 20 minutes anywhere in the city.",
-              },
-              {
-                icon: "🥗",
-                title: "Fresh Ingredients",
-                desc: "Sourced from trusted suppliers, guaranteed safe and hygienic.",
-              },
-              {
-                icon: "💬",
-                title: "24/7 Support",
-                desc: "Our customer care team is always ready to help you.",
-              },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100 hover:shadow-md transition-all"
+      {/* ── BOOKING SECTION ── */}
+      <section className="py-20 bg-orange-50 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+            <div className="md:w-1/2 p-10 lg:p-14 flex flex-col justify-center">
+              <h2 className="text-4xl font-extrabold text-textMain mb-4">
+                Book a Table
+              </h2>
+              <p className="text-textSec mb-8">
+                Reserve your spot at Foodly and enjoy an unforgettable dining
+                experience with your loved ones.
+              </p>
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  navigate("/booking");
+                }}
               >
-                <div className="text-5xl mb-5">{f.icon}</div>
-                <h3 className="text-lg font-bold text-textMain mb-3">
-                  {f.title}
-                </h3>
-                <p className="text-textSec text-sm leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
+                <button
+                  type="submit"
+                  className="w-full bg-primary text-white font-bold h-12 rounded-xl hover:bg-primaryDark transition-all mt-4"
+                >
+                  Book Now
+                </button>
+              </form>
+            </div>
+            <div className="md:w-1/2 relative min-h-[300px]">
+              <img
+                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
+                alt="Restaurant interior"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       </section>

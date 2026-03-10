@@ -3,6 +3,7 @@ import { User } from "../types";
 import AdminLayout, { AdminTab } from "../components/AdminLayout";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminOrders from "./admin/AdminOrders";
+import AdminBookingPage from "./admin/AdminBookingPage";
 import AdminMenu from "./admin/AdminMenu";
 
 interface AdminPageProps {
@@ -22,6 +23,7 @@ const AdminPage = ({ user, onLogout }: AdminPageProps) => {
     >
       {activeTab === "dashboard" && <AdminDashboard />}
       {activeTab === "orders" && <AdminOrders />}
+      {activeTab === "bookings" && <AdminBookingPage />}
       {activeTab === "menu" && <AdminMenu />}
       {activeTab === "users" && (
         <div className="flex items-center justify-center h-64">
