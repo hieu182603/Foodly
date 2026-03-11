@@ -1,16 +1,6 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Search,
-  Plus,
-  ChevronDown,
-  Check,
-  UtensilsCrossed,
-  Heart,
-  Star,
-  Clock,
-  LayoutDashboard,
-} from "lucide-react";
+import { Search, Plus, ChevronDown, Check, UtensilsCrossed, Heart, Star, Clock, LayoutDashboard } from "lucide-react";
 import { dbService } from "../databaseService";
 import { Dish } from "../types";
 
