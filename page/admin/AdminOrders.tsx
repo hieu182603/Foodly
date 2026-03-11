@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, X, Check, Search, Download, Eye, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Pencil, Trash2, X, Check, Search, Download, Eye, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { dbService } from "../../databaseService";
 import { Order, OrderStatus } from "../../types";
@@ -13,26 +13,14 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   Cancelled: "Đã hủy",
 };
 
-const STATUS_OPTIONS: OrderStatus[] = [
-  "Pending",
-  "Cooking",
-  "Completed",
-  "Cancelled",
-];
-
-const StatusBadge = ({ status }: { status: OrderStatus }) => {
-  const map: Record<OrderStatus, string> = {
-    Completed: "bg-green-100 text-green-700",
-    Cooking: "bg-orange-100 text-orange-700",
-    Pending: "bg-blue-100 text-blue-700",
-    Cancelled: "bg-red-100 text-red-700",
-  };
-  return (
-    <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm border ${map[status]} ${status === 'Pending' ? 'border-blue-200' : status === 'Cooking' ? 'border-orange-200' : status === 'Completed' ? 'border-green-200' : 'border-red-200'}`}>
-      {STATUS_LABELS[status]}
-    </span>
-  );
+const STATUS_COLORS: Record<OrderStatus, string> = {
+  Completed: "bg-green-100 text-green-700 border-green-200",
+  Cooking: "bg-orange-100 text-orange-700 border-orange-200",
+  Pending: "bg-blue-100 text-blue-700 border-blue-200",
+  Cancelled: "bg-red-100 text-red-700 border-red-200",
 };
+
+const ITEMS_PER_PAGE = 8;
 
 const AdminOrders = () => {
   const navigate = useNavigate();
@@ -43,39 +31,33 @@ const AdminOrders = () => {
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [typeFilter, setTypeFilter] = useState<string>("All");
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
 
-  // Load orders from database
   useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        const allOrders = await dbService.getOrders();
-        setOrders(allOrders);
-      } catch (error) {
-        console.error("Failed to load orders:", error);
-      }
-    };
     loadOrders();
   }, []);
 
-  /* filter logic */
-  const filtered = orders.filter((o) => {
-    const matchesSearch =
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.customer.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || o.status === statusFilter;
-    const matchesType =
-      typeFilter === "All" ||
-      (typeFilter === "Takeaway" && o.deliveryOption === "takeaway") ||
-      (typeFilter === "Delivery" && o.deliveryOption === "delivery");
-
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  // Reset to first page on filter change
   useEffect(() => {
     setCurrentPage(1);
   }, [search, statusFilter, typeFilter]);
+
+  const loadOrders = async () => {
+    try {
+      const allOrders = await dbService.getOrders();
+      setOrders(allOrders);
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+    }
+  };
+
+  const filtered = orders.filter((o) => {
+    const matchesSearch = o.id.toLowerCase().includes(search.toLowerCase()) ||
+      o.customer.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || o.status === statusFilter;
+    const matchesType = typeFilter === "All" ||
+      (typeFilter === "Takeaway" && o.deliveryOption === "takeaway") ||
+      (typeFilter === "Delivery" && o.deliveryOption === "delivery");
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedOrders = filtered.slice(
@@ -83,26 +65,22 @@ const AdminOrders = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  /* delete */
   const handleDelete = async (id: string) => {
-    if (window.confirm("Xóa đơn hàng này?")) {
-      try {
-        await dbService.deleteOrder(id);
-        const allOrders = await dbService.getOrders();
-        setOrders(allOrders);
-      } catch (error) {
-        console.error("Failed to delete order:", error);
-        alert("Không thể xóa đơn hàng. Vui lòng thử lại.");
-      }
+    if (!window.confirm("Xóa đơn hàng này?")) return;
+    
+    try {
+      await dbService.deleteOrder(id);
+      loadOrders();
+    } catch (error) {
+      console.error("Failed to delete order:", error);
+      alert("Không thể xóa đơn hàng. Vui lòng thử lại.");
     }
   };
 
-  /* save status edit */
   const handleSaveStatus = async (id: string) => {
     try {
       await dbService.updateOrder(id, { status: editStatus });
-      const allOrders = await dbService.getOrders();
-      setOrders(allOrders);
+      loadOrders();
       setEditingId(null);
     } catch (error) {
       console.error("Failed to update order:", error);
@@ -112,32 +90,23 @@ const AdminOrders = () => {
 
   return (
     <div className="space-y-6">
-      {/* Heading */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-extrabold text-textMain mb-1">
-            Quản lý đơn hàng
-          </h2>
-          <p className="text-textSec text-sm">{orders.length} đơn hàng</p>
+          <h2 className="text-2xl font-extrabold text-textMain mb-1">Quản lý đơn hàng</h2>
+          <p className="text-textSec text-sm">{filtered.length} / {orders.length} đơn hàng</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => dbService.export()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-textMain font-bold rounded-xl hover:bg-gray-200 transition-all text-sm"
-            title="Export database.json"
-          >
-            <Download size={16} /> Export DB
-          </button>
-        </div>
+        <button
+          onClick={() => dbService.export()}
+          className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-textMain font-bold rounded-xl hover:bg-gray-200 transition-all text-sm"
+          title="Export database.json"
+        >
+          <Download size={16} /> Export DB
+        </button>
       </div>
 
-      {/* Search & Filters */}
       <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1 max-w-2xl transition-all focus-within:max-w-3xl">
-          <Search
-            size={16}
-            className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400"
-          />
+        <div className="relative flex-1 max-w-2xl">
+          <Search size={16} className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Tìm theo mã đơn hoặc tên khách hàng..."
@@ -156,10 +125,9 @@ const AdminOrders = () => {
               className="bg-transparent border-none text-sm font-bold text-textMain outline-none min-w-[124px]"
             >
               <option value="All">Tất cả trạng thái</option>
-              <option value="Pending">Chờ xác nhận</option>
-              <option value="Cooking">Đang chế biến</option>
-              <option value="Completed">Đã hoàn thành</option>
-              <option value="Cancelled">Đã hủy</option>
+              {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
             </select>
           </div>
 
@@ -178,127 +146,87 @@ const AdminOrders = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
               <tr>
-                {[
-                  "ID",
-                  "Khách hàng",
-                  "Loại",
-                  "Tổng tiền",
-                  "Trạng thái",
-                  "Hành động",
-                ].map((h) => (
-                  <th key={h} className="px-5 py-3 font-semibold">
-                    {h}
-                  </th>
+                {["ID", "Khách hàng", "Loại", "Tổng tiền", "Trạng thái", "Hành động"].map((h) => (
+                  <th key={h} className="px-5 py-3 font-semibold">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 uppercase text-[11px] tracking-tight">
-              {paginatedOrders.map((o) => (
-                <tr
-                  key={o.id}
-                  className="hover:bg-gray-50/60 transition-colors group"
-                >
-                  <td className="px-5 py-5 font-black text-primary border-l-4 border-transparent group-hover:border-primary transition-all">
-                    {o.id}
-                  </td>
-                  <td className="px-5 py-5 font-bold text-textMain">{o.customer}</td>
-                  <td className="px-5 py-5 font-bold text-textSec">
-                    {o.deliveryOption === 'takeaway' ? 'MANG ĐI' : 'GIAO HÀNG'}
-                  </td>
-                  <td className="px-5 py-5 font-black text-textMain">{fmt(o.total)}</td>
-                  <td className="px-5 py-4">
-                    {editingId === o.id ? (
-                      <select
-                        value={editStatus}
-                        onChange={(e) =>
-                          setEditStatus(e.target.value as OrderStatus)
-                        }
-                        className="text-xs rounded-lg border border-gray-200 px-2 py-1 outline-none focus:ring-2 focus:ring-primary bg-white font-bold"
-                      >
-                        {STATUS_OPTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {STATUS_LABELS[s]}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <StatusBadge status={o.status} />
-                    )}
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
+              {paginatedOrders.length > 0 ? (
+                paginatedOrders.map((o) => (
+                  <tr key={o.id} className="hover:bg-gray-50/60 transition-colors group">
+                    <td className="px-5 py-5 font-black text-primary border-l-4 border-transparent group-hover:border-primary transition-all">
+                      {o.id}
+                    </td>
+                    <td className="px-5 py-5 font-bold text-textMain">{o.customer}</td>
+                    <td className="px-5 py-5 font-bold text-textSec">
+                      {o.deliveryOption === 'takeaway' ? 'MANG ĐI' : 'GIAO HÀNG'}
+                    </td>
+                    <td className="px-5 py-5 font-black text-textMain">{fmt(o.total)}</td>
+                    <td className="px-5 py-4">
                       {editingId === o.id ? (
-                        <>
-                          <button
-                            onClick={() => handleSaveStatus(o.id)}
-                            className="text-green-600 hover:text-green-700 p-1.5 rounded-lg hover:bg-green-50 transition-all"
-                          >
-                            <Check size={15} />
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="text-gray-400 hover:text-gray-500 p-1.5 rounded-lg hover:bg-gray-100 transition-all"
-                          >
-                            <X size={15} />
-                          </button>
-                        </>
+                        <select
+                          value={editStatus}
+                          onChange={(e) => setEditStatus(e.target.value as OrderStatus)}
+                          className="text-xs rounded-lg border border-gray-200 px-2 py-1 outline-none focus:ring-2 focus:ring-primary bg-white font-bold"
+                        >
+                          {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                            <option key={key} value={key}>{label}</option>
+                          ))}
+                        </select>
                       ) : (
-                        <>
-                          <button
-                            onClick={() => navigate(`/orders/${o.id}`)}
-                            className="text-primary hover:text-primaryDark p-1.5 rounded-lg hover:bg-orange-50 transition-all"
-                            title="Xem chi tiết"
-                          >
-                            <Eye size={15} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingId(o.id);
-                              setEditStatus(o.status);
-                            }}
-                            className="text-blue-500 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-all"
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(o.id)}
-                            className="text-red-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-all"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </>
+                        <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm border ${STATUS_COLORS[o.status]}`}>
+                          {STATUS_LABELS[o.status]}
+                        </span>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        {editingId === o.id ? (
+                          <>
+                            <button onClick={() => handleSaveStatus(o.id)} className="text-green-600 hover:text-green-700 p-1.5 rounded-lg hover:bg-green-50 transition-all">
+                              <Check size={15} />
+                            </button>
+                            <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-500 p-1.5 rounded-lg hover:bg-gray-100 transition-all">
+                              <X size={15} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => navigate(`/orders/${o.id}`)} className="text-primary hover:text-primaryDark p-1.5 rounded-lg hover:bg-orange-50 transition-all" title="Xem chi tiết">
+                              <Eye size={15} />
+                            </button>
+                            <button onClick={() => { setEditingId(o.id); setEditStatus(o.status); }} className="text-blue-500 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-all">
+                              <Pencil size={15} />
+                            </button>
+                            <button onClick={() => handleDelete(o.id)} className="text-red-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-all">
+                              <Trash2 size={15} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-12 text-center text-textSec"
-                  >
-                    Không tìm thấy đơn hàng
-                  </td>
+                  <td colSpan={6} className="px-5 py-12 text-center text-textSec">Không tìm thấy đơn hàng</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
-      {/* Pagination */}
+
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mt-4">
+        <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
           <p className="text-[10px] font-black text-textSec uppercase tracking-widest">
-            Hiển thị <span className="text-primary">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> -{" "}
-            <span className="text-primary">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</span> của{" "}
-            <span className="text-primary">{filtered.length}</span> đơn hàng
+            Hiển thị <span className="text-primary">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> - <span className="text-primary">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</span> của <span className="text-primary">{filtered.length}</span> đơn hàng
           </p>
           <div className="flex gap-2">
             <button
@@ -313,10 +241,7 @@ const AdminOrders = () => {
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === i + 1
-                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
-                    : "bg-gray-50 text-textSec hover:bg-white hover:border-gray-200 border border-transparent"
-                    }`}
+                  className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === i + 1 ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" : "bg-gray-50 text-textSec hover:bg-white hover:border-gray-200 border border-transparent"}`}
                 >
                   {i + 1}
                 </button>
