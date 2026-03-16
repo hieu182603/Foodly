@@ -17,6 +17,10 @@ const AdminBookingPage = () => {
   const [statusFilter, setStatusFilter] = useState<BookingStatus | "all">("all");
   const [tableFilter, setTableFilter] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => {
     loadData();
@@ -38,18 +42,32 @@ const AdminBookingPage = () => {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: BookingStatus) => {
+  const handleStatusChange = async (id: string, newStatus: BookingStatus, reason?: string) => {
+    if (newStatus === "cancelled" && !reason) {
+      setRejectingBookingId(id);
+      setShowRejectModal(true);
+      return;
+    }
+
     setBookings((prev) =>
       prev.map((booking) =>
-        booking.id === id ? { ...booking, status: newStatus } : booking
+        booking.id === id ? { ...booking, status: newStatus, rejectReason: reason } : booking
       )
     );
     
     try {
-      await dbService.updateBooking(id, { status: newStatus });
+      const updates: Partial<Booking> = { status: newStatus };
+      if (reason) updates.rejectReason = reason;
+      await dbService.updateBooking(id, updates);
     } catch (error) {
       console.error("Failed to update booking status:", error);
       loadData();
+    }
+    
+    if (newStatus === "cancelled") {
+      setShowRejectModal(false);
+      setRejectingBookingId(null);
+      setRejectReason("");
     }
   };
 
@@ -163,6 +181,11 @@ const AdminBookingPage = () => {
                         <div className="flex items-center gap-2 font-medium text-textSec mt-1">
                           <Clock size={14} className="text-primary" /> {booking.time}
                         </div>
+                        {booking.status === 'cancelled' && booking.rejectReason && (
+                          <div className="text-[10px] text-red-600 bg-red-50 inline-block px-2 py-1 rounded mt-1 border border-red-100 italic">
+                            Lý do hủy: {booking.rejectReason}
+                          </div>
+                        )}
                       </td>
                       <td className="px-5 py-5 text-center">
                         <div className="flex flex-col items-center gap-2">
@@ -231,6 +254,55 @@ const AdminBookingPage = () => {
           </table>
         </div>
       </div>
+
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900">Từ chối đặt bàn</h3>
+              <button 
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectingBookingId(null);
+                  setRejectReason("");
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-bold text-gray-700 mb-2">Lý do từ chối</label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="VD: Hết bàn trống, sai số điện thoại..."
+                className="w-full h-32 px-4 py-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all resize-none text-sm"
+              />
+            </div>
+            <div className="p-4 bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectingBookingId(null);
+                  setRejectReason("");
+                }}
+                className="px-4 py-2 font-bold text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={() => rejectingBookingId && handleStatusChange(rejectingBookingId, "cancelled", rejectReason || "Không có lý do")}
+                disabled={!rejectReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors shadow-sm shadow-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Xác nhận từ chối
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
