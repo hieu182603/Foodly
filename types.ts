@@ -69,5 +69,6 @@ export interface Booking {
   status: BookingStatus;
   specialRequests?: string;
   paymentMethod?: string;
+  rejectReason?: string;
   createdAt?: string;
 }

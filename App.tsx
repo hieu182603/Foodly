@@ -102,6 +102,7 @@ const App = () => {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataLoadedForUserId, setDataLoadedForUserId] = useState<number | null>(null);
 
   // Load initial data
   useEffect(() => {
@@ -118,9 +119,11 @@ const App = () => {
           ]);
           setCart(loadedCart);
           setWishlist(loadedWishlist);
+          setDataLoadedForUserId(currentUser.id);
         } else {
           setCart([]);
           setWishlist([]);
+          setDataLoadedForUserId(null);
         }
       } catch (error) {
         console.error("Failed to load data:", error);
@@ -133,21 +136,21 @@ const App = () => {
 
   // Save cart to database
   useEffect(() => {
-    if (currentUser && !isLoading) {
+    if (currentUser && currentUser.id === dataLoadedForUserId && !isLoading) {
       dbService.setCart(currentUser.id, cart).catch((error) => {
         console.error("Failed to save cart:", error);
       });
     }
-  }, [cart, currentUser, isLoading]);
+  }, [cart, currentUser, isLoading, dataLoadedForUserId]);
 
   // Save wishlist to database
   useEffect(() => {
-    if (currentUser && !isLoading) {
+    if (currentUser && currentUser.id === dataLoadedForUserId && !isLoading) {
       dbService.setWishlist(currentUser.id, wishlist).catch((error) => {
         console.error("Failed to save wishlist:", error);
       });
     }
-  }, [wishlist, currentUser, isLoading]);
+  }, [wishlist, currentUser, isLoading, dataLoadedForUserId]);
 
   // Save current user to localStorage (session data)
   useEffect(() => {

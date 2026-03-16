@@ -111,6 +111,14 @@ const BookingHistoryPage = ({ currentUser }: { currentUser: UserType | null }) =
                                                     {booking.guests} người
                                                 </p>
                                             </div>
+                                            {booking.status === 'cancelled' && booking.rejectReason && (
+                                                <div className="mt-3 bg-red-50 p-3 rounded-xl border border-red-100 flex items-start gap-2 max-w-md">
+                                                    <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={14} />
+                                                    <div className="text-red-600 text-[11px] leading-tight">
+                                                        <span className="font-bold">Lý do hủy:</span> {booking.rejectReason}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
