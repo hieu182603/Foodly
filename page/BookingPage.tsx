@@ -89,8 +89,33 @@ const BookingPage = ({ currentUser }: { currentUser: UserType | null }) => {
     });
   };
 
+  const handleGoToReview = () => {
+    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (formData.name.trim().length === 0) {
+      setError("Vui lòng nhập họ và tên hợp lệ.");
+      return;
+    }
+    if (!phoneRegex.test(formData.phone)) {
+      setError("Số điện thoại không hợp lệ (Bắt đầu bằng 0 hoặc +84, gồm 10 số).");
+      return;
+    }
+    if (formData.email && formData.email.trim() !== "" && !emailRegex.test(formData.email)) {
+      setError("Định dạng email không hợp lệ.");
+      return;
+    }
+    
+    setError("");
+    setStep(3);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser) {
+      setError("Vui lòng đăng nhập để đặt bàn.");
+      return;
+    }
     if (!formData.assignedTable) {
       setError("Please select a table to proceed.");
       return;
@@ -102,7 +127,7 @@ const BookingPage = ({ currentUser }: { currentUser: UserType | null }) => {
     try {
       const newBooking: Booking = {
         id: `B-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`,
-        userId: currentUser?.id || 0,
+        userId: currentUser.id,
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
@@ -304,7 +329,7 @@ const BookingPage = ({ currentUser }: { currentUser: UserType | null }) => {
                     <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
                     <div className="relative">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="0123 456 789" pattern="[0-9]{10,11}" title="Vui lòng nhập số điện thoại hợp lệ (10-11 số)" className="w-full h-14 pl-12 pr-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:ring-0 outline-none transition-colors" />
+                      <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="0123 456 789" className="w-full h-14 pl-12 pr-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:ring-0 outline-none transition-colors" />
                     </div>
                   </div>
                   <div>
@@ -325,9 +350,15 @@ const BookingPage = ({ currentUser }: { currentUser: UserType | null }) => {
                 </div>
               </div>
 
+              {error && (
+                <div className="mt-6 p-4 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-200 animate-in fade-in zoom-in duration-300">
+                  {error}
+                </div>
+              )}
+
               <div className="mt-10 flex gap-4">
-                <button onClick={() => setStep(1)} className="w-1/3 h-14 bg-gray-100 text-gray-700 font-bold rounded-xl text-lg hover:bg-gray-200 transition-colors">Back</button>
-                <button onClick={() => setStep(3)} disabled={!formData.name || !formData.phone} className="w-2/3 h-14 bg-primary text-white font-bold rounded-xl text-lg hover:bg-primaryDark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Review Booking</button>
+                <button onClick={() => { setError(""); setStep(1); }} className="w-1/3 h-14 bg-gray-100 text-gray-700 font-bold rounded-xl text-lg hover:bg-gray-200 transition-colors">Back</button>
+                <button onClick={handleGoToReview} className="w-2/3 h-14 bg-primary text-white font-bold rounded-xl text-lg hover:bg-primaryDark transition-colors">Review Booking</button>
               </div>
             </div>
           )}
