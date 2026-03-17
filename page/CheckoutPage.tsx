@@ -55,6 +55,22 @@ const CheckoutPage = ({
       return;
     }
 
+    if (deliveryOption === "delivery") {
+      const trimmedPhone = phone.trim();
+      const trimmedAddress = address.trim();
+      const phoneRegex = /^(0\d{9,10})$/;
+
+      if (!phoneRegex.test(trimmedPhone)) {
+        alert("Vui lòng nhập số điện thoại hợp lệ (10-11 số và bắt đầu bằng 0).");
+        return;
+      }
+
+      if (trimmedAddress.length < 5) {
+        alert("Vui lòng nhập địa chỉ giao hàng chi tiết hơn.");
+        return;
+      }
+    }
+
     setIsProcessing(true);
 
     // Create new order
