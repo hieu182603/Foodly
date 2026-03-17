@@ -54,6 +54,7 @@ const OrderDetailPage = ({ currentUser }: { currentUser: User | null }) => {
             await dbService.updateOrder(order.id, { status: "Cancelled" });
             setOrder({ ...order, status: "Cancelled" });
             alert("Đơn hàng đã được hủy thành công.");
+            navigate("/");
         } catch (error) {
             console.error("Failed to cancel order:", error);
             alert("Có lỗi xảy ra khi hủy đơn hàng. Vui lòng thử lại.");
@@ -291,17 +292,15 @@ const OrderDetailPage = ({ currentUser }: { currentUser: User | null }) => {
                                 </button>
                             )}
 
-                            <button
-                                onClick={() => navigate("/menu")}
-                                className="w-full bg-primary hover:bg-primaryDark text-white py-4 rounded-22px font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group"
-                            >
-                                Tiếp tục mua sắm
-                                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                            </button>
-
-                            <p className="text-[10px] text-center text-textSec font-bold px-4 leading-relaxed">
-                                Đơn hàng chỉ có thể hủy khi đang ở trạng thái <span className="text-amber-500">Chờ xác nhận</span>.
-                            </p>
+                            {currentUser?.role === "customer" && (
+                                <button
+                                    onClick={() => navigate("/menu")}
+                                    className="w-full bg-primary hover:bg-primaryDark text-white py-4 rounded-22px font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group"
+                                >
+                                    Tiếp tục mua sắm
+                                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            )}
                         </div>
 
                         {/* Support Box */}
