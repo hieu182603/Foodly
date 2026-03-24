@@ -47,7 +47,6 @@ const WEEKEND_SLOTS = [
   "21:30",
   "22:00",
   "22:30",
-  "23:00",
 ];
 const WEEKDAY_SLOTS = [
   "09:00",
@@ -76,7 +75,6 @@ const WEEKDAY_SLOTS = [
   "20:30",
   "21:00",
   "21:30",
-  "22:00",
 ];
 const PERIOD_RANGES: Record<
   "morning" | "afternoon" | "evening",
@@ -151,9 +149,17 @@ const BookingPage = ({ currentUser }: { currentUser: UserType | null }) => {
     const day = new Date(formData.date).getDay();
     const slots = day === 0 || day === 6 ? WEEKEND_SLOTS : WEEKDAY_SLOTS;
     const [start, end] = PERIOD_RANGES[period];
+
+    const today = new Date().toISOString().split("T")[0];
+    const isToday = formData.date === today;
+    const now = new Date();
+    const nowMinutes = isToday ? now.getHours() * 60 + now.getMinutes() : -1;
+
     return slots.filter((t) => {
-      const h = parseInt(t);
-      return h >= start && h < end;
+      const [h, m] = t.split(":").map(Number);
+      if (h < start || h >= end) return false;
+      if (isToday && h * 60 + m <= nowMinutes) return false;
+      return true;
     });
   };
 
@@ -333,8 +339,8 @@ const BookingPage = ({ currentUser }: { currentUser: UserType | null }) => {
                         (
                         {new Date(formData.date).getDay() === 0 ||
                         new Date(formData.date).getDay() === 6
-                          ? "Weekend: 08:00-23:00"
-                          : "Weekday: 09:00-22:00"}
+                          ? "Sat-Sun: 08:00-23:00"
+                          : "Mon-Fri: 09:00-22:00"}
                         )
                       </span>
                     )}
