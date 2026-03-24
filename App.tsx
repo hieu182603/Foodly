@@ -102,7 +102,9 @@ const App = () => {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [dataLoadedForUserId, setDataLoadedForUserId] = useState<number | null>(null);
+  const [dataLoadedForUserId, setDataLoadedForUserId] = useState<number | null>(
+    null,
+  );
 
   // Load initial data
   useEffect(() => {
@@ -162,8 +164,8 @@ const App = () => {
       const found = prev.find((i) => i.id === dish.id);
       return found
         ? prev.map((i) =>
-          i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
-        )
+            i.id === dish.id ? { ...i, quantity: i.quantity + 1 } : i,
+          )
         : [...prev, { ...dish, quantity: 1 }];
     });
 
@@ -401,7 +403,10 @@ const App = () => {
         <Route
           path="/book-table"
           element={
-            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer"]}>
+            <ProtectedRoute
+              currentUser={currentUser}
+              allowedRoles={["customer"]}
+            >
               <Layout
                 cartCount={cartCount}
                 currentUser={currentUser}
@@ -414,7 +419,10 @@ const App = () => {
         <Route
           path="/bookings"
           element={
-            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer"]}>
+            <ProtectedRoute
+              currentUser={currentUser}
+              allowedRoles={["customer"]}
+            >
               <Layout
                 cartCount={cartCount}
                 currentUser={currentUser}
@@ -427,7 +435,10 @@ const App = () => {
         <Route
           path="/bookings/:bookingId"
           element={
-            <ProtectedRoute currentUser={currentUser} allowedRoles={["customer", "admin"]}>
+            <ProtectedRoute
+              currentUser={currentUser}
+              allowedRoles={["customer", "admin"]}
+            >
               <Layout
                 cartCount={cartCount}
                 currentUser={currentUser}
@@ -457,7 +468,7 @@ const App = () => {
           }
         />
         <Route
-          path="/admin"
+          path="/admin/*"
           element={
             <ProtectedRoute currentUser={currentUser} allowedRoles={["admin"]}>
               <AdminPage user={currentUser!} onLogout={logout} />

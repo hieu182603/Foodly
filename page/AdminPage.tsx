@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { User } from "../types";
-import AdminLayout, { AdminTab } from "../components/AdminLayout";
+import AdminLayout from "../components/AdminLayout";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminOrders from "./admin/AdminOrders";
 import AdminBookingPage from "./admin/AdminBookingPage";
@@ -12,23 +13,17 @@ interface AdminPageProps {
   onLogout: () => void;
 }
 
-const AdminPage = ({ user, onLogout }: AdminPageProps) => {
-  const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
-
-  return (
-    <AdminLayout
-      activeTab={activeTab}
-      setTab={setActiveTab}
-      user={user}
-      onLogout={onLogout}
-    >
-      {activeTab === "dashboard" && <AdminDashboard />}
-      {activeTab === "orders" && <AdminOrders />}
-      {activeTab === "bookings" && <AdminBookingPage />}
-      {activeTab === "menu" && <AdminMenu />}
-      {activeTab === "users" && <AdminUsers />}
-    </AdminLayout>
-  );
-};
+const AdminPage = ({ user, onLogout }: AdminPageProps) => (
+  <AdminLayout user={user} onLogout={onLogout}>
+    <Routes>
+      <Route index element={<AdminDashboard />} />
+      <Route path="orders" element={<AdminOrders />} />
+      <Route path="bookings" element={<AdminBookingPage />} />
+      <Route path="menu" element={<AdminMenu />} />
+      <Route path="users" element={<AdminUsers />} />
+      <Route path="*" element={<Navigate to="/admin" replace />} />
+    </Routes>
+  </AdminLayout>
+);
 
 export default AdminPage;
